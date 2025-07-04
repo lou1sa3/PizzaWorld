@@ -1,4 +1,4 @@
-# PizzaWorld Dashboard
+# PizzaWorld+
 
 A comprehensive business intelligence dashboard system for PizzaWorld with Spring Boot backend and Angular frontend.
 
