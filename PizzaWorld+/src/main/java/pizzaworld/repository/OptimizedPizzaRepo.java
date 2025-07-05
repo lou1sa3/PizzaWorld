@@ -1120,12 +1120,12 @@ public interface OptimizedPizzaRepo extends JpaRepository<User, Long> {
                clv.first_order_date, clv.last_order_date, clv.customer_lifespan_days,
                clv.stores_visited, clv.daily_value, clv.clv_per_order, clv.customer_segment
         FROM customer_lifetime_value clv
-        JOIN orders o ON clv.customerid = o.customerid
-        JOIN stores s ON o.storeid = s.storeid
-        WHERE s.state_abbr = :state
-        GROUP BY clv.customerid, clv.total_orders, clv.total_spent, clv.avg_order_value,
-                 clv.first_order_date, clv.last_order_date, clv.customer_lifespan_days,
-                 clv.stores_visited, clv.daily_value, clv.clv_per_order, clv.customer_segment
+        WHERE clv.customerid IN (
+            SELECT DISTINCT o.customerid 
+            FROM orders o 
+            JOIN stores s ON o.storeid = s.storeid 
+            WHERE s.state_abbr = :state
+        )
         ORDER BY clv.total_spent DESC
         LIMIT :limit
         """, nativeQuery = true)
@@ -1136,11 +1136,11 @@ public interface OptimizedPizzaRepo extends JpaRepository<User, Long> {
                clv.first_order_date, clv.last_order_date, clv.customer_lifespan_days,
                clv.stores_visited, clv.daily_value, clv.clv_per_order, clv.customer_segment
         FROM customer_lifetime_value clv
-        JOIN orders o ON clv.customerid = o.customerid
-        WHERE o.storeid = :storeId
-        GROUP BY clv.customerid, clv.total_orders, clv.total_spent, clv.avg_order_value,
-                 clv.first_order_date, clv.last_order_date, clv.customer_lifespan_days,
-                 clv.stores_visited, clv.daily_value, clv.clv_per_order, clv.customer_segment
+        WHERE clv.customerid IN (
+            SELECT DISTINCT o.customerid 
+            FROM orders o 
+            WHERE o.storeid = :storeId
+        )
         ORDER BY clv.total_spent DESC
         LIMIT :limit
         """, nativeQuery = true)
@@ -1172,9 +1172,12 @@ public interface OptimizedPizzaRepo extends JpaRepository<User, Long> {
             COUNT(CASE WHEN clv.customer_segment = 'Occasional' THEN 1 END) as occasional_customers,
             COUNT(CASE WHEN clv.customer_segment = 'One-time' THEN 1 END) as one_time_customers
         FROM customer_lifetime_value clv
-        JOIN orders o ON clv.customerid = o.customerid
-        JOIN stores s ON o.storeid = s.storeid
-        WHERE s.state_abbr = :state
+        WHERE clv.customerid IN (
+            SELECT DISTINCT o.customerid 
+            FROM orders o 
+            JOIN stores s ON o.storeid = s.storeid 
+            WHERE s.state_abbr = :state
+        )
         """, nativeQuery = true)
     Map<String, Object> getCustomerLifetimeValueSummaryState(@Param("state") String state);
 
@@ -1189,8 +1192,11 @@ public interface OptimizedPizzaRepo extends JpaRepository<User, Long> {
             COUNT(CASE WHEN clv.customer_segment = 'Occasional' THEN 1 END) as occasional_customers,
             COUNT(CASE WHEN clv.customer_segment = 'One-time' THEN 1 END) as one_time_customers
         FROM customer_lifetime_value clv
-        JOIN orders o ON clv.customerid = o.customerid
-        WHERE o.storeid = :storeId
+        WHERE clv.customerid IN (
+            SELECT DISTINCT o.customerid 
+            FROM orders o 
+            WHERE o.storeid = :storeId
+        )
         """, nativeQuery = true)
     Map<String, Object> getCustomerLifetimeValueSummaryStore(@Param("storeId") String storeId);
 
@@ -1217,10 +1223,12 @@ public interface OptimizedPizzaRepo extends JpaRepository<User, Long> {
                ROUND((cra.retained_6m * 100.0 / cra.cohort_size), 2) as retention_rate_6m,
                ROUND((cra.retained_12m * 100.0 / cra.cohort_size), 2) as retention_rate_12m
         FROM customer_retention_analysis cra
-        JOIN orders o ON cra.customerid = o.customerid
-        JOIN stores s ON o.storeid = s.storeid
-        WHERE s.state_abbr = :state
-        GROUP BY cra.cohort_month, cra.cohort_size, cra.retained_1m, cra.retained_3m, cra.retained_6m, cra.retained_12m
+        WHERE cra.cohort_month IN (
+            SELECT DISTINCT DATE_TRUNC('month', o.orderdate)::date
+            FROM orders o 
+            JOIN stores s ON o.storeid = s.storeid 
+            WHERE s.state_abbr = :state
+        )
         ORDER BY cra.cohort_month DESC
         LIMIT :limit
         """, nativeQuery = true)
@@ -1233,9 +1241,11 @@ public interface OptimizedPizzaRepo extends JpaRepository<User, Long> {
                ROUND((cra.retained_6m * 100.0 / cra.cohort_size), 2) as retention_rate_6m,
                ROUND((cra.retained_12m * 100.0 / cra.cohort_size), 2) as retention_rate_12m
         FROM customer_retention_analysis cra
-        JOIN orders o ON cra.customerid = o.customerid
-        WHERE o.storeid = :storeId
-        GROUP BY cra.cohort_month, cra.cohort_size, cra.retained_1m, cra.retained_3m, cra.retained_6m, cra.retained_12m
+        WHERE cra.cohort_month IN (
+            SELECT DISTINCT DATE_TRUNC('month', o.orderdate)::date
+            FROM orders o 
+            WHERE o.storeid = :storeId
+        )
         ORDER BY cra.cohort_month DESC
         LIMIT :limit
         """, nativeQuery = true)

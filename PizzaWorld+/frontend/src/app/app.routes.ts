@@ -53,14 +53,7 @@ export const routes: Routes = [
       (m) => m.StoreDetailsComponent
     )
 },
-{
-  path: 'sales',
-  canActivate: [AuthGuard],
-  loadComponent: () =>
-    import('./pages/sales/sales.component').then(
-      (m) => m.SalesComponent
-    )
-},
+
 {
   path: 'orders',
   canActivate: [AuthGuard],

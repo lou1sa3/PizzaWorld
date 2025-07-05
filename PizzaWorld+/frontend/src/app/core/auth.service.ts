@@ -10,6 +10,8 @@ import { KpiService } from './kpi.service'; // Import KpiService to clear caches
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly tokenKey = 'authToken';
+  private readonly rememberMeKey = 'rememberMe';
+  private readonly savedCredentialsKey = 'savedCredentials';
 
   private currentUserSubject = new BehaviorSubject<CurrentUser | null>(null);
   currentUser$               = this.currentUserSubject.asObservable();
@@ -22,10 +24,10 @@ export class AuthService {
   logout(): void {
     // Clear all localStorage data for security
     localStorage.clear();
-    
+
     // Clear all in-memory caches
     this.kpi.clearAllCaches();
-    
+
     // Clear current user
     this.currentUserSubject.next(null);
   }

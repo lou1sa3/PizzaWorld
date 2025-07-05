@@ -240,3 +240,34 @@ tbody tr {
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
 }
+
+/* Dropdown specific styles */
+.dropdown-container {
+  position: relative;
+  z-index: 1;
+
+  .relative {
+    position: relative;
+    z-index: 2;
+  }
+
+  // Ensure dropdown appears above everything
+  div[style*="z-index: 9999"] {
+    position: absolute !important;
+    z-index: 9999 !important;
+    background: white !important;
+    border: 1px solid #d1d5db !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    border-radius: 8px !important;
+  }
+}
+
+// Ensure parent containers don't clip dropdowns
+.px-6.py-6.bg-gradient-to-r.from-orange-25.to-orange-50 {
+  overflow: visible !important;
+}
+
+// Grid containers should allow overflow
+.grid {
+  overflow: visible !important;
+}

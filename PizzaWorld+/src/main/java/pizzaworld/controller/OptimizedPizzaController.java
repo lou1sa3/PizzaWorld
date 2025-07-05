@@ -362,9 +362,11 @@ public class OptimizedPizzaController {
 
     @GetMapping("/analytics/customer-acquisition")
     public ResponseEntity<List<Map<String, Object>>> getCustomerAcquisitionAnalytics(
+            @RequestParam(required = false) List<String> states,
+            @RequestParam(required = false) List<String> storeIds,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        return ResponseEntity.ok(pizzaService.getCustomerAcquisitionAnalytics(user));
+        return ResponseEntity.ok(pizzaService.getCustomerAcquisitionAnalytics(user, states, storeIds));
     }
 
     @GetMapping("/analytics/daily-trends")
@@ -1003,8 +1005,10 @@ public class OptimizedPizzaController {
 
     @GetMapping("/products")
     public ResponseEntity<List<Map<String, Object>>> getProductsCatalogue(
-            @RequestParam(required = false) String search) {
-        List<Map<String, Object>> products = pizzaService.getProductsCatalogueWithLaunchDate(search);
+            @RequestParam(required = false) String search,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
+        List<Map<String, Object>> products = pizzaService.getProductsCatalogueWithLaunchDate(search, user);
         return ResponseEntity.ok(products);
     }
 
@@ -1013,18 +1017,36 @@ public class OptimizedPizzaController {
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) String search) {
-        
-        return ResponseEntity.ok(pizzaService.getProductsPerformance(year, month, category, search));
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) List<String> storeIds,
+            @RequestParam(required = false) List<String> states,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
+        return ResponseEntity.ok(pizzaService.getProductsPerformance(year, month, category, search, user, storeIds, states));
     }
 
     @GetMapping("/products/kpis")
     public ResponseEntity<Map<String, Object>> getProductsKpis(
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month,
-            @RequestParam(required = false) String category) {
-        
-        return ResponseEntity.ok(pizzaService.getProductsKpis(year, month, category));
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) List<String> storeIds,
+            @RequestParam(required = false) List<String> states,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
+        return ResponseEntity.ok(pizzaService.getProductsKpis(year, month, category, user, storeIds, states));
+    }
+
+    @GetMapping("/products/revenue-by-category")
+    public ResponseEntity<List<Map<String, Object>>> getRevenueByCategory(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) List<String> storeIds,
+            @RequestParam(required = false) List<String> states,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
+        return ResponseEntity.ok(pizzaService.getRevenueByCategory(year, month, search, user, storeIds, states));
     }
 
     @GetMapping("/products/export")
@@ -1036,7 +1058,7 @@ public class OptimizedPizzaController {
         User user = userDetails.getUser();
         
         try {
-            List<Map<String, Object>> products = pizzaService.getProductsCatalogueWithLaunchDate(search);
+            List<Map<String, Object>> products = pizzaService.getProductsCatalogueWithLaunchDate(search, user);
             
             List<String> headers = List.of("SKU", "Product Name", "Size", "Price", "Category", "Launch Date");
             List<List<String>> rows = products.stream()
@@ -1066,13 +1088,15 @@ public class OptimizedPizzaController {
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) List<String> storeIds,
+            @RequestParam(required = false) List<String> states,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             HttpServletResponse response) {
         
         User user = userDetails.getUser();
         
         try {
-            List<Map<String, Object>> performance = pizzaService.getProductsPerformance(year, month, category, search);
+            List<Map<String, Object>> performance = pizzaService.getProductsPerformance(year, month, category, search, user, storeIds, states);
             
             List<String> headers = List.of("SKU", "Product Name", "Size", "Price", "Category", "Launch Date", "Total Revenue", "Orders", "Units Sold");
             List<List<String>> rows = performance.stream()
@@ -1092,7 +1116,8 @@ public class OptimizedPizzaController {
             String filterSuffix = (year != null ? "-year" + year : "") + 
                                 (month != null ? "-month" + month : "") + 
                                 (category != null ? "-" + category.toLowerCase() : "") +
-                                (search != null ? "-filtered" : "");
+                                (search != null ? "-filtered" : "") +
+                                (storeIds != null && !storeIds.isEmpty() ? "-stores" : "");
             String filename = "products-performance" + filterSuffix + "-" + new Date().toInstant().toString().split("T")[0] + ".csv";
             CsvExportUtil.writeCsv(response, headers, rows, filename);
         } catch (Exception e) {
@@ -1413,17 +1438,21 @@ public class OptimizedPizzaController {
     @PreAuthorize("hasAuthority('HQ_ADMIN') or hasAuthority('STATE_MANAGER') or hasAuthority('STORE_MANAGER')")
     public ResponseEntity<List<Map<String, Object>>> getCustomerLifetimeValue(
             @RequestParam(defaultValue = "100") Integer limit,
+            @RequestParam(required = false) List<String> states,
+            @RequestParam(required = false) List<String> storeIds,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        return ResponseEntity.ok(pizzaService.getCustomerLifetimeValue(user, limit));
+        return ResponseEntity.ok(pizzaService.getCustomerLifetimeValue(user, limit, states, storeIds));
     }
 
     @GetMapping("/analytics/customer-lifetime-value/summary")
     @PreAuthorize("hasAuthority('HQ_ADMIN') or hasAuthority('STATE_MANAGER') or hasAuthority('STORE_MANAGER')")
     public ResponseEntity<Map<String, Object>> getCustomerLifetimeValueSummary(
+            @RequestParam(required = false) List<String> states,
+            @RequestParam(required = false) List<String> storeIds,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        return ResponseEntity.ok(pizzaService.getCustomerLifetimeValueSummary(user));
+        return ResponseEntity.ok(pizzaService.getCustomerLifetimeValueSummary(user, states, storeIds));
     }
 
     @GetMapping("/analytics/customer-lifetime-value/export")
@@ -1456,9 +1485,11 @@ public class OptimizedPizzaController {
     @PreAuthorize("hasAuthority('HQ_ADMIN') or hasAuthority('STATE_MANAGER') or hasAuthority('STORE_MANAGER')")
     public ResponseEntity<List<Map<String, Object>>> getCustomerRetentionAnalysis(
             @RequestParam(defaultValue = "24") Integer limit,
+            @RequestParam(required = false) List<String> states,
+            @RequestParam(required = false) List<String> storeIds,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        return ResponseEntity.ok(pizzaService.getCustomerRetentionAnalysis(user, limit));
+        return ResponseEntity.ok(pizzaService.getCustomerRetentionAnalysis(user, limit, states, storeIds));
     }
 
     @GetMapping("/analytics/customer-retention/export")
@@ -1539,9 +1570,11 @@ public class OptimizedPizzaController {
     @GetMapping("/analytics/store-capacity-v3/summary")
     @PreAuthorize("hasAuthority('HQ_ADMIN') or hasAuthority('STATE_MANAGER') or hasAuthority('STORE_MANAGER')")
     public ResponseEntity<List<Map<String, Object>>> getStoreCapacityV3Summary(
+            @RequestParam(required = false) List<String> states,
+            @RequestParam(required = false) List<String> storeIds,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        return ResponseEntity.ok(pizzaService.getStoreCapacityV3Summary(user));
+        return ResponseEntity.ok(pizzaService.getStoreCapacityV3Summary(user, states, storeIds));
     }
 
     @GetMapping("/analytics/store-capacity-v3/metrics")
@@ -1557,17 +1590,21 @@ public class OptimizedPizzaController {
     @GetMapping("/analytics/store-capacity-v3/peak-hours")
     @PreAuthorize("hasAuthority('HQ_ADMIN') or hasAuthority('STATE_MANAGER') or hasAuthority('STORE_MANAGER')")
     public ResponseEntity<List<Map<String, Object>>> getStoreCapacityV3PeakHours(
+            @RequestParam(required = false) List<String> states,
+            @RequestParam(required = false) List<String> storeIds,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        return ResponseEntity.ok(pizzaService.getStoreCapacityV3PeakHours(user));
+        return ResponseEntity.ok(pizzaService.getStoreCapacityV3PeakHours(user, states, storeIds));
     }
 
     @GetMapping("/analytics/store-capacity-v3/customer-distance")
     @PreAuthorize("hasAuthority('HQ_ADMIN') or hasAuthority('STATE_MANAGER') or hasAuthority('STORE_MANAGER')")
     public ResponseEntity<Map<String, Object>> getStoreCapacityV3CustomerDistance(
+            @RequestParam(required = false) List<String> states,
+            @RequestParam(required = false) List<String> storeIds,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        return ResponseEntity.ok(pizzaService.getStoreCapacityV3CustomerDistance(user));
+        return ResponseEntity.ok(pizzaService.getStoreCapacityV3CustomerDistance(user, states, storeIds));
     }
 
     @GetMapping("/analytics/store-capacity-v3/delivery-metrics")
@@ -1575,9 +1612,11 @@ public class OptimizedPizzaController {
     public ResponseEntity<List<Map<String, Object>>> getStoreCapacityV3DeliveryMetrics(
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) List<String> states,
+            @RequestParam(required = false) List<String> storeIds,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        return ResponseEntity.ok(pizzaService.getStoreCapacityV3DeliveryMetrics(user, year, month));
+        return ResponseEntity.ok(pizzaService.getStoreCapacityV3DeliveryMetrics(user, year, month, states, storeIds));
     }
 
     @GetMapping("/analytics/store-capacity-v3/utilization-chart")

@@ -42,6 +42,9 @@ export class LoginComponent implements OnInit {
   loadingProgress = 0;
   loadingMessage = 'Using parallel processing for faster loading...';
 
+  private readonly rememberMeKey = 'rememberMe';
+  private readonly savedCredentialsKey = 'savedCredentials';
+
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
@@ -54,13 +57,18 @@ export class LoginComponent implements OnInit {
   ngOnInit(): void {
     this.form = this.fb.group({
       username: ['', Validators.required],
-      password: ['', Validators.required]
+      password: ['', Validators.required],
+      rememberMe: [false]
     });
 
     // Check if user is already logged in
     if (this.auth.token) {
       this.router.navigate(['/dashboard']);
     }
+
+    // Load saved credentials if remember me was checked
+    this.loadSavedCredentials();
+
     // Show logout message as popup if present in sessionStorage
     const logoutMsg = sessionStorage.getItem('logoutMsg');
     if (logoutMsg) {
@@ -75,6 +83,59 @@ export class LoginComponent implements OnInit {
     this.showPassword = !this.showPassword;
   }
 
+  private loadSavedCredentials(): void {
+    try {
+      const rememberMe = localStorage.getItem(this.rememberMeKey);
+      if (rememberMe === 'true') {
+        const savedCredentials = localStorage.getItem(this.savedCredentialsKey);
+        if (savedCredentials) {
+          try {
+            const credentials = JSON.parse(savedCredentials);
+            this.form.patchValue({
+              username: credentials.username,
+              password: credentials.password,
+              rememberMe: true
+            });
+          } catch (error) {
+            console.error('Error loading saved credentials:', error);
+            this.clearSavedCredentials();
+          }
+        }
+      }
+    } catch (error) {
+      console.error('localStorage not available:', error);
+      // localStorage not available - silently continue without remember me
+    }
+  }
+
+  private saveCredentials(): void {
+    try {
+      const formValue = this.form.value;
+      if (formValue.rememberMe) {
+        localStorage.setItem(this.rememberMeKey, 'true');
+        localStorage.setItem(this.savedCredentialsKey, JSON.stringify({
+          username: formValue.username,
+          password: formValue.password
+        }));
+      } else {
+        this.clearSavedCredentials();
+      }
+    } catch (error) {
+      console.error('localStorage not available:', error);
+      // localStorage not available - silently continue without remember me
+    }
+  }
+
+  private clearSavedCredentials(): void {
+    try {
+      localStorage.removeItem(this.rememberMeKey);
+      localStorage.removeItem(this.savedCredentialsKey);
+    } catch (error) {
+      console.error('localStorage not available:', error);
+      // localStorage not available - silently continue
+    }
+  }
+
   login(): void {
     if (this.form.invalid) return;
 
@@ -84,8 +145,14 @@ export class LoginComponent implements OnInit {
     this.loadingProgress = 10;
     this.loadingMessage = 'Authenticating...';
 
+    // Save credentials if remember me is checked
+    this.saveCredentials();
+
     this.http
-      .post<{ token: string }>('/api/login', this.form.value)
+      .post<{ token: string }>('/api/login', {
+        username: this.form.value.username,
+        password: this.form.value.password
+      })
       .pipe(
         finalize(() => {
           this.loading = false;
@@ -138,6 +205,9 @@ export class LoginComponent implements OnInit {
           this.errorMsg = 'Benutzername oder Passwort falsch';
           this.successMsg = null;
           this.showLoadingPopup = false;
+          // Clear saved credentials on login failure
+          this.clearSavedCredentials();
+          this.form.patchValue({ rememberMe: false });
         }
       });
   }

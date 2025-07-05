@@ -111,7 +111,16 @@ export class DeliveryMetricsComponent implements OnInit {
   peakHours: PeakHour[] = [];
   customerDistances: CustomerDistance[] = [];
 
-  // Filter state - removed all filters
+  // Filter state
+  selectedStates: string[] = [];
+  selectedStores: string[] = [];
+  availableStates: any[] = [];
+  availableStores: any[] = [];
+  showStateDropdown = false;
+  showStoreDropdown = false;
+
+  // User information
+  currentUser: any = null;
 
   // Loading and error states
   loading = false;
@@ -200,12 +209,55 @@ export class DeliveryMetricsComponent implements OnInit {
   Math = Math;
 
   ngOnInit(): void {
+    this.loadUserInfo();
     this.loadInitialData();
   }
 
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('authToken');
     return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
+  }
+
+  private loadUserInfo(): void {
+    this.http.get<any>('/api/v2/profile', {
+      headers: this.getAuthHeaders()
+    }).subscribe({
+      next: (profile) => {
+        this.currentUser = profile;
+        if (this.currentUser?.role === 'HQ_ADMIN' || this.currentUser?.role === 'STATE_MANAGER') {
+          this.loadAvailableFilters();
+        }
+      },
+      error: (error) => {
+        console.error('Failed to load user profile:', error);
+      }
+    });
+  }
+
+  private loadAvailableFilters(): void {
+    // Load available states
+    this.http.get<any[]>('/api/v2/orders/available-states', {
+      headers: this.getAuthHeaders()
+    }).subscribe({
+      next: (states) => {
+        this.availableStates = states || [];
+      },
+      error: (error) => {
+        console.error('Failed to load states:', error);
+      }
+    });
+
+    // Load available stores
+    this.http.get<any[]>('/api/v2/stores', {
+      headers: this.getAuthHeaders()
+    }).subscribe({
+      next: (stores) => {
+        this.availableStores = stores || [];
+      },
+      error: (error) => {
+        console.error('Failed to load stores:', error);
+      }
+    });
   }
 
   loadInitialData(): void {
@@ -250,7 +302,7 @@ export class DeliveryMetricsComponent implements OnInit {
   }
 
   private loadStoreCapacitySummary(): Promise<void> {
-    const cacheKey = 'storeCapacitySummary';
+    const cacheKey = `storeCapacitySummary_${this.selectedStates.join(',')}_${this.selectedStores.join(',')}`;
     const cachedData = this.getCachedData(cacheKey);
 
     if (cachedData) {
@@ -258,9 +310,14 @@ export class DeliveryMetricsComponent implements OnInit {
       return Promise.resolve();
     }
 
+    const params = new HttpParams()
+      .set('states', this.selectedStates.join(','))
+      .set('storeIds', this.selectedStores.join(','));
+
     return new Promise((resolve, reject) => {
       this.http.get<StoreCapacitySummary[]>('/api/v2/analytics/store-capacity-v3/summary', {
-        headers: this.getAuthHeaders()
+        headers: this.getAuthHeaders(),
+        params: params
       }).subscribe({
         next: (data) => {
           this.storeCapacitySummary = data || [];
@@ -273,9 +330,14 @@ export class DeliveryMetricsComponent implements OnInit {
   }
 
   private loadDeliveryMetrics(): Promise<void> {
+    const params = new HttpParams()
+      .set('states', this.selectedStates.join(','))
+      .set('storeIds', this.selectedStores.join(','));
+
     return new Promise((resolve, reject) => {
       this.http.get<DeliveryMetric[]>('/api/v2/analytics/store-capacity-v3/delivery-metrics', {
-        headers: this.getAuthHeaders()
+        headers: this.getAuthHeaders(),
+        params: params
       }).subscribe({
         next: (data) => {
           this.deliveryMetrics = data || [];
@@ -287,9 +349,14 @@ export class DeliveryMetricsComponent implements OnInit {
   }
 
   private loadPeakHours(): Promise<void> {
+    const params = new HttpParams()
+      .set('states', this.selectedStates.join(','))
+      .set('storeIds', this.selectedStores.join(','));
+
     return new Promise((resolve, reject) => {
       this.http.get<PeakHour[]>('/api/v2/analytics/store-capacity-v3/peak-hours', {
-        headers: this.getAuthHeaders()
+        headers: this.getAuthHeaders(),
+        params: params
       }).subscribe({
         next: (data) => {
           this.peakHours = data || [];
@@ -301,9 +368,14 @@ export class DeliveryMetricsComponent implements OnInit {
   }
 
   private loadCustomerDistances(): Promise<void> {
+    const params = new HttpParams()
+      .set('states', this.selectedStates.join(','))
+      .set('storeIds', this.selectedStores.join(','));
+
     return new Promise((resolve, reject) => {
       this.http.get<any>('/api/v2/analytics/store-capacity-v3/customer-distance', {
-        headers: this.getAuthHeaders()
+        headers: this.getAuthHeaders(),
+        params: params
       }).subscribe({
         next: (data) => {
           this.customerDistances = data?.distances || [];
@@ -451,7 +523,18 @@ export class DeliveryMetricsComponent implements OnInit {
       '10+ miles': 0
     };
 
+    // Deduplicate customers by customerid to get unique count
+    const uniqueCustomers = new Map<string, CustomerDistance>();
     this.customerDistances.forEach(cd => {
+      // Keep the first occurrence or the one with shortest distance if customer appears multiple times
+      if (!uniqueCustomers.has(cd.customerid) ||
+          cd.distance_miles < uniqueCustomers.get(cd.customerid)!.distance_miles) {
+        uniqueCustomers.set(cd.customerid, cd);
+      }
+    });
+
+    // Count unique customers by distance category
+    uniqueCustomers.forEach(cd => {
       if (distanceCategories.hasOwnProperty(cd.distance_category)) {
         distanceCategories[cd.distance_category as keyof typeof distanceCategories]++;
       }
@@ -563,7 +646,94 @@ export class DeliveryMetricsComponent implements OnInit {
     };
   }
 
-  // Filter methods removed - no longer using filters
+  // Filter methods
+  toggleStateDropdown(): void {
+    this.showStateDropdown = !this.showStateDropdown;
+    this.showStoreDropdown = false;
+  }
+
+  toggleStoreDropdown(): void {
+    this.showStoreDropdown = !this.showStoreDropdown;
+    this.showStateDropdown = false;
+  }
+
+  toggleStateSelection(state: string): void {
+    const index = this.selectedStates.indexOf(state);
+    if (index > -1) {
+      this.selectedStates.splice(index, 1);
+    } else {
+      this.selectedStates.push(state);
+    }
+  }
+
+  toggleStoreSelection(storeId: string): void {
+    const index = this.selectedStores.indexOf(storeId);
+    if (index > -1) {
+      this.selectedStores.splice(index, 1);
+    } else {
+      this.selectedStores.push(storeId);
+    }
+  }
+
+  getSelectedStatesText(): string {
+    if (this.selectedStates.length === 0) {
+      return 'All States';
+    } else if (this.selectedStates.length === 1) {
+      return this.selectedStates[0];
+    } else {
+      return `${this.selectedStates.length} States Selected`;
+    }
+  }
+
+  getSelectedStoresText(): string {
+    if (this.selectedStores.length === 0) {
+      return 'All Stores';
+    } else if (this.selectedStores.length === 1) {
+      const store = this.availableStores.find(s => s.storeid === this.selectedStores[0]);
+      return store ? `${store.city}, ${store.state}` : this.selectedStores[0];
+    } else {
+      return `${this.selectedStores.length} Stores Selected`;
+    }
+  }
+
+  applyFilters(): void {
+    this.showStateDropdown = false;
+    this.showStoreDropdown = false;
+    this.clearCache();
+    this.loadAllData();
+  }
+
+  clearAllFilters(): void {
+    this.selectedStates = [];
+    this.selectedStores = [];
+    this.showStateDropdown = false;
+    this.showStoreDropdown = false;
+    this.clearCache();
+    this.loadAllData();
+  }
+
+  hasActiveFilters(): boolean {
+    return this.selectedStates.length > 0 || this.selectedStores.length > 0;
+  }
+
+  getFilterLabel(): string {
+    if (this.currentUser?.role === 'STORE_MANAGER') {
+      return `Store ${this.currentUser.storeId}`;
+    } else if (this.currentUser?.role === 'STATE_MANAGER' && !this.hasActiveFilters()) {
+      return `${this.currentUser.stateAbbr} State`;
+    } else if (this.hasActiveFilters()) {
+      const parts = [];
+      if (this.selectedStates.length > 0) {
+        parts.push(`${this.selectedStates.length} State(s)`);
+      }
+      if (this.selectedStores.length > 0) {
+        parts.push(`${this.selectedStores.length} Store(s)`);
+      }
+      return parts.join(', ');
+    } else {
+      return 'All Locations';
+    }
+  }
 
   // Sorting methods
   sortSummaryTable(column: string): void {

@@ -203,3 +203,37 @@
     opacity: 0.7;
   }
 }
+
+// Dropdown z-index fixes
+.dropdown-container {
+  position: relative;
+}
+
+// Ensure dropdowns appear above other content
+.dropdown-container .absolute {
+  z-index: 9999 !important;
+}
+
+// Prevent overflow issues with parent containers
+.bg-gradient-to-r {
+  position: relative;
+  z-index: 1;
+}
+
+// Ensure the filter section stays above charts
+.px-6.py-6.bg-gradient-to-r {
+  position: relative;
+  z-index: 10;
+}
+
+// Fix for ApexCharts overlapping issues
+apx-chart {
+  position: relative;
+  z-index: 1;
+}
+
+// Ensure modals and tooltips appear above everything
+.tooltip,
+.modal {
+  z-index: 10000 !important;
+}

@@ -31,9 +31,103 @@
       <input
         type="text"
         id="sidebarSearch"
+        [(ngModel)]="searchQuery"
+        (input)="onSearchInput($event)"
+        (focus)="onSearchFocus()"
+        (blur)="onSearchBlur()"
+        (keydown)="onSearchKeyDown($event)"
         class="w-full pl-10 pr-4 py-2 bg-white/10 border border-orange-400/30 rounded-lg text-white placeholder-orange-200 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/40 transition-all duration-200"
         placeholder="Search dashboard..."
-        aria-label="Search dashboard" />
+        aria-label="Search dashboard"
+        autocomplete="off" />
+
+      <!-- Clear button -->
+      <button
+        *ngIf="searchQuery"
+        (click)="clearSearch()"
+        class="absolute inset-y-0 right-0 pr-3 flex items-center text-orange-200 hover:text-white transition-colors duration-200"
+        aria-label="Clear search">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <!-- Search Results Dropdown -->
+      <div
+        *ngIf="showSearchResults && (searchResults.length > 0 || searchQuery)"
+        class="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-80 overflow-y-auto">
+
+        <!-- Search Results -->
+        <div *ngIf="searchResults.length > 0" class="p-2">
+          <div class="text-xs text-gray-500 px-3 py-2 font-medium">
+            {{ searchResults.length }} result{{ searchResults.length !== 1 ? 's' : '' }} found
+          </div>
+
+          <div
+            *ngFor="let result of searchResults; let i = index"
+            (click)="selectResult(result)"
+            (mouseenter)="selectedIndex = i"
+            [class.bg-orange-50]="selectedIndex === i"
+            class="flex items-center px-3 py-2 hover:bg-orange-50 rounded-lg cursor-pointer transition-colors duration-150">
+
+            <!-- Icon -->
+            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+              <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="result.icon"></path>
+              </svg>
+            </div>
+
+            <!-- Content -->
+            <div class="ml-3 flex-1 min-w-0">
+              <div class="text-sm font-medium text-gray-900">
+                {{ result.title }}
+              </div>
+              <div class="text-xs text-gray-500 truncate">
+                {{ result.description }}
+              </div>
+            </div>
+
+            <!-- Category badge -->
+            <div class="flex-shrink-0 ml-2">
+              <span
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                [class.bg-blue-100]="result.category === 'page'"
+                [class.text-blue-800]="result.category === 'page'"
+                [class.bg-green-100]="result.category === 'action'"
+                [class.text-green-800]="result.category === 'action'"
+                [class.bg-purple-100]="result.category === 'help'"
+                [class.text-purple-800]="result.category === 'help'">
+                {{ result.category }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Results -->
+        <div *ngIf="searchResults.length === 0 && searchQuery" class="p-4 text-center">
+          <div class="text-gray-500 text-sm">
+            No results found for "{{ searchQuery }}"
+          </div>
+          <div class="text-xs text-gray-400 mt-1">
+            Try searching for pages like "dashboard", "orders", or "customers"
+          </div>
+        </div>
+
+        <!-- Quick shortcuts when no query -->
+        <div *ngIf="!searchQuery" class="p-2">
+          <div class="text-xs text-gray-500 px-3 py-2 font-medium">
+            Quick shortcuts
+          </div>
+          <div class="space-y-1">
+            <div class="text-xs text-gray-400 px-3 py-1">
+              Press <kbd class="px-1 py-0.5 bg-gray-100 rounded text-xs">Ctrl+K</kbd> to search
+            </div>
+            <div class="text-xs text-gray-400 px-3 py-1">
+              Type page names like "dashboard", "orders", "customers"
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -134,6 +228,28 @@
             </svg>
           </div>
           <span class="font-medium">Delivery Metrics</span>
+          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Divider -->
+    <div class="my-4 border-t border-orange-400/30"></div>
+
+    <!-- Support Section -->
+    <ul class="space-y-2">
+      <!-- Contact Support -->
+      <li>
+        <a
+          routerLink="/contact-support"
+          routerLinkActive="active-nav-link"
+          class="flex items-center px-4 py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
+          <div class="flex items-center justify-center w-6 h-6 mr-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+          </div>
+          <span class="font-medium">Contact Support</span>
           <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
         </a>
       </li>

@@ -862,6 +862,14 @@ export class StoresComponent implements OnInit, OnDestroy {
     return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
   }
 
+  formatNumberWithDots(value: number): string {
+    return value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  formatWholeNumberWithDots(value: number): string {
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
   // Navigation Methods
   navigateToStoreDetails(store: StorePerformanceData): void {
     this.router.navigate(['/stores', store.storeid]);

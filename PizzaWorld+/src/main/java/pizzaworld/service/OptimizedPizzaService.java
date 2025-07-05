@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -606,9 +607,38 @@ public class OptimizedPizzaService {
         return switch (user.getRole()) {
             case "HQ_ADMIN" -> repo.getCustomerAcquisitionAnalyticsHQ();
             case "STATE_MANAGER" -> repo.getCustomerAcquisitionAnalyticsState(user.getStateAbbr());
-            case "STORE_MANAGER" -> List.of(); // Store managers don't have acquisition data
+            case "STORE_MANAGER" -> getStoreCustomerAcquisitionData(user.getStoreId());
             default -> throw new AccessDeniedException("Unknown role: " + user.getRole());
         };
+    }
+
+    // Customer Acquisition Analytics - Role-based with filtering
+    @Cacheable(value = "customerAcquisitionFiltered", key = "#user.role + '_' + #user.stateAbbr + '_' + #states + '_' + #storeIds")
+    public List<Map<String, Object>> getCustomerAcquisitionAnalytics(User user, List<String> states, List<String> storeIds) {
+        return switch (user.getRole()) {
+            case "HQ_ADMIN" -> getFilteredCustomerAcquisitionAnalytics(user, states, storeIds);
+            case "STATE_MANAGER" -> getFilteredCustomerAcquisitionAnalytics(user, states, storeIds);
+            case "STORE_MANAGER" -> getFilteredCustomerAcquisitionAnalytics(user, states, storeIds);
+            default -> throw new AccessDeniedException("Unknown role: " + user.getRole());
+        };
+    }
+
+    // Helper method to get store-specific customer acquisition data
+    private List<Map<String, Object>> getStoreCustomerAcquisitionData(String storeId) {
+        String sql = """
+            SELECT 
+                EXTRACT(YEAR FROM o.orderdate) as year,
+                EXTRACT(MONTH FROM o.orderdate) as month,
+                TO_CHAR(o.orderdate, 'Month') as month_name,
+                COUNT(DISTINCT o.customerid) as new_customers,
+                SUM(o.total) as revenue_from_new_customers
+            FROM orders o
+            WHERE o.storeid = ?
+            GROUP BY EXTRACT(YEAR FROM o.orderdate), EXTRACT(MONTH FROM o.orderdate), TO_CHAR(o.orderdate, 'Month')
+            ORDER BY year DESC, month DESC
+            LIMIT 12
+            """;
+        return jdbcTemplate.queryForList(sql, storeId);
     }
 
     // Daily Revenue Trends - Only for HQ (only view available)
@@ -2243,7 +2273,7 @@ public class OptimizedPizzaService {
     public List<Map<String, Object>> getProductsList(User user) {
         // Use direct query from products table like the dashboard
         StringBuilder sql = new StringBuilder("""
-            SELECT DISTINCT p.sku, p.name as product_name, p.category, p.size, p.launch_date
+            SELECT DISTINCT p.sku, p.name as product_name, p.category, p.size, p.launch as launch_date
             FROM products p
             """);
         
@@ -2278,7 +2308,7 @@ public class OptimizedPizzaService {
         Boolean sinceLaunch = (Boolean) filters.get("sinceLaunch");
         
         if (Boolean.TRUE.equals(sinceLaunch)) {
-            sql.append(" AND (year IS NULL OR year >= (SELECT EXTRACT(YEAR FROM launch_date) FROM products_info_all WHERE sku = ? LIMIT 1))");
+            sql.append(" AND (year IS NULL OR year >= (SELECT EXTRACT(YEAR FROM launch) FROM products_info_all WHERE sku = ? LIMIT 1))");
             params.add(filters.get("sku"));
         } else if ("all-time".equals(timePeriod)) {
             // For all-time, get the aggregated row where both year and month are NULL
@@ -2689,8 +2719,24 @@ public class OptimizedPizzaService {
     /**
      * Get catalogue products with launch date (for export and enhanced display)
      */
-    public List<Map<String, Object>> getProductsCatalogueWithLaunchDate(String search) {
-        return getProductsCatalogue(search); // Same as above
+    public List<Map<String, Object>> getProductsCatalogueWithLaunchDate(String search, User user) {
+        StringBuilder sql = new StringBuilder("""
+            SELECT p.sku, p.name as product_name, p.size, p.price, p.category, p.launch as launch_date
+            FROM products p
+            WHERE 1=1
+            """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (search != null && !search.trim().isEmpty()) {
+            sql.append(" AND (p.name ILIKE ? OR p.sku ILIKE ?)");
+            params.add("%" + search + "%");
+            params.add("%" + search + "%");
+        }
+
+        sql.append(" ORDER BY p.name");
+
+        return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }
 
     /**
@@ -2702,74 +2748,123 @@ public class OptimizedPizzaService {
      *                ORDER BY total_revenue DESC
      *                LIMIT $5 OFFSET ($6 - 1) * $5;
      */
-    public List<Map<String, Object>> getProductsPerformance(Integer year, Integer month, String category, String search) {
+    public List<Map<String, Object>> getProductsPerformance(Integer year, Integer month, String category, String search, User user, List<String> storeIds, List<String> states) {
         StringBuilder sql = new StringBuilder("""
             SELECT p.sku,
-                   p.name as product_name,
-                   p.size,
-                   p.price,
-                   p.category,
-                   p.launch as launch_date,
-                   COALESCE(SUM(oi.quantity * p.price), 0) as total_revenue,
-                   COALESCE(SUM(oi.quantity), 0) as units_sold
+                p.name as product_name,
+                p.size,
+                p.price,
+                p.category,
+                p.launch as launch_date,
+                COALESCE(SUM(oi.quantity * p.price), 0) as total_revenue,
+                COALESCE(COUNT(DISTINCT o.orderid), 0) as amount_ordered,
+                COALESCE(SUM(oi.quantity), 0) as units_sold
             FROM products p
             LEFT JOIN order_items oi ON p.sku = oi.sku
+            LEFT JOIN orders o ON oi.orderid = o.orderid
             """);
+
         List<Object> params = new ArrayList<>();
-        boolean hasOrderFilter = false;
-        if (year != null && month != null) {
-            sql.append(" LEFT JOIN orders o ON oi.orderid = o.orderid");
-            sql.append(" WHERE EXTRACT(YEAR FROM o.orderdate) = ? AND EXTRACT(MONTH FROM o.orderdate) = ?");
+        List<String> whereClauses = new ArrayList<>();
+
+        if (user != null) {
+            String role = user.getRole();
+            if ("STATE_MANAGER".equals(role)) {
+                whereClauses.add("o.storeid IN (SELECT storeid FROM stores WHERE state_abbr = ?)");
+                params.add(user.getStateAbbr());
+            } else if ("STORE_MANAGER".equals(role)) {
+                whereClauses.add("o.storeid = ?");
+                params.add(user.getStoreId());
+            }
+        }
+        
+        if (year != null) {
+            whereClauses.add("EXTRACT(YEAR FROM o.orderdate) = ?");
             params.add(year);
+        }
+        if (month != null) {
+            whereClauses.add("EXTRACT(MONTH FROM o.orderdate) = ?");
             params.add(month);
-            hasOrderFilter = true;
-        } else if (year != null) {
-            sql.append(" LEFT JOIN orders o ON oi.orderid = o.orderid");
-            sql.append(" WHERE EXTRACT(YEAR FROM o.orderdate) = ?");
-            params.add(year);
-            hasOrderFilter = true;
-        } else {
-            sql.append(" WHERE 1=1");
         }
         if (category != null && !category.trim().isEmpty()) {
-            sql.append(" AND p.category ILIKE ?");
+            whereClauses.add("p.category ILIKE ?");
             params.add("%" + category + "%");
         }
         if (search != null && !search.trim().isEmpty()) {
-            sql.append(" AND (p.sku ILIKE ? OR p.name ILIKE ?)");
+            whereClauses.add("(p.sku ILIKE ? OR p.name ILIKE ?)");
             params.add("%" + search + "%");
             params.add("%" + search + "%");
         }
+        if (storeIds != null && !storeIds.isEmpty()) {
+            whereClauses.add("o.storeid IN (" + String.join(",", Collections.nCopies(storeIds.size(), "?")) + ")");
+            params.addAll(storeIds);
+        }
+        if (states != null && !states.isEmpty()) {
+            whereClauses.add("o.storeid IN (SELECT storeid FROM stores WHERE state_abbr IN (" + String.join(",", Collections.nCopies(states.size(), "?")) + "))");
+            params.addAll(states);
+        }
+
+        if (!whereClauses.isEmpty()) {
+            sql.append(" WHERE ").append(String.join(" AND ", whereClauses));
+        }
+
         sql.append(" GROUP BY p.sku, p.name, p.size, p.price, p.category, p.launch ORDER BY total_revenue DESC");
+
         return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }
 
-    // Revenue by category with filters
-    public List<Map<String, Object>> getRevenueByCategory(Integer year, Integer month, String search) {
+    public List<Map<String, Object>> getRevenueByCategory(Integer year, Integer month, String search, User user, List<String> storeIds, List<String> states) {
         StringBuilder sql = new StringBuilder("""
             SELECT p.category,
                    COALESCE(SUM(oi.quantity * p.price), 0) as total_revenue
             FROM products p
             LEFT JOIN order_items oi ON p.sku = oi.sku
+            LEFT JOIN orders o ON oi.orderid = o.orderid
             """);
+        
         List<Object> params = new ArrayList<>();
-        if (year != null && month != null) {
-            sql.append(" LEFT JOIN orders o ON oi.orderid = o.orderid");
-            sql.append(" WHERE EXTRACT(YEAR FROM o.orderdate) = ? AND EXTRACT(MONTH FROM o.orderdate) = ?");
+        List<String> whereClauses = new ArrayList<>();
+        
+        if (user != null) {
+            String role = user.getRole();
+            if ("HQ_ADMIN".equals(role)) {
+                // HQ can filter by states if provided
+                if (states != null && !states.isEmpty()) {
+                    String inClause = String.join(",", Collections.nCopies(states.size(), "?"));
+                    whereClauses.add(String.format("o.storeid IN (SELECT storeid FROM stores WHERE state_abbr IN (%s))", inClause));
+                    params.addAll(states);
+                }
+            } else if ("STATE_MANAGER".equals(role)) {
+                whereClauses.add("o.storeid IN (SELECT storeid FROM stores WHERE state_abbr = ?)");
+                params.add(user.getStateAbbr());
+            } else if ("STORE_MANAGER".equals(role)) {
+                whereClauses.add("o.storeid = ?");
+                params.add(user.getStoreId());
+            }
+        }
+        
+        if (year != null) {
+            whereClauses.add("EXTRACT(YEAR FROM o.orderdate) = ?");
             params.add(year);
+        }
+        if (month != null) {
+            whereClauses.add("EXTRACT(MONTH FROM o.orderdate) = ?");
             params.add(month);
-        } else if (year != null) {
-            sql.append(" LEFT JOIN orders o ON oi.orderid = o.orderid");
-            sql.append(" WHERE EXTRACT(YEAR FROM o.orderdate) = ?");
-            params.add(year);
-        } else {
-            sql.append(" WHERE 1=1");
         }
         if (search != null && !search.trim().isEmpty()) {
-            sql.append(" AND (p.sku ILIKE ? OR p.name ILIKE ?)");
+            whereClauses.add("(p.sku ILIKE ? OR p.name ILIKE ?)");
             params.add("%" + search + "%");
             params.add("%" + search + "%");
         }
+        if (storeIds != null && !storeIds.isEmpty()) {
+            whereClauses.add("o.storeid IN (" + String.join(",", Collections.nCopies(storeIds.size(), "?")) + ")");
+            params.addAll(storeIds);
+        }
+        
+        if (!whereClauses.isEmpty()) {
+            sql.append(" WHERE ").append(String.join(" AND ", whereClauses));
+        }
+        
         sql.append(" GROUP BY p.category ORDER BY total_revenue DESC");
         return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }
@@ -2777,7 +2872,7 @@ public class OptimizedPizzaService {
     /**
      * Get aggregate KPIs for hero tiles
      */
-    public Map<String, Object> getProductsKpis(Integer year, Integer month, String category) {
+    public Map<String, Object> getProductsKpis(Integer year, Integer month, String category, User user, List<String> storeIds, List<String> states) {
         StringBuilder sql = new StringBuilder("""
             SELECT 
                 COUNT(DISTINCT p.sku) as total_products,
@@ -2787,26 +2882,51 @@ public class OptimizedPizzaService {
                 COALESCE(AVG(p.price), 0) as avg_price
             FROM products p
             LEFT JOIN order_items oi ON p.sku = oi.sku
-            WHERE 1=1
+            LEFT JOIN orders o ON oi.orderid = o.orderid
             """);
         
         List<Object> params = new ArrayList<>();
-        
-        // Fix the filtering logic to only include orders from the specified time period
-        if (year != null && month != null) {
-            sql.append(" AND EXTRACT(YEAR FROM o.orderdate) = ? AND EXTRACT(MONTH FROM o.orderdate) = ?");
-            params.add(year);
-            params.add(month);
-        } else if (year != null) {
-            sql.append(" AND EXTRACT(YEAR FROM o.orderdate) = ?");
-            params.add(year);
+        List<String> whereClauses = new ArrayList<>();
+
+        if (user != null) {
+            String role = user.getRole();
+            if ("HQ_ADMIN".equals(role)) {
+                // HQ can filter by states if provided
+                if (states != null && !states.isEmpty()) {
+                    String inClause = String.join(",", Collections.nCopies(states.size(), "?"));
+                    whereClauses.add(String.format("o.storeid IN (SELECT storeid FROM stores WHERE state_abbr IN (%s))", inClause));
+                    params.addAll(states);
+                }
+            } else if ("STATE_MANAGER".equals(role)) {
+                whereClauses.add("o.storeid IN (SELECT storeid FROM stores WHERE state_abbr = ?)");
+                params.add(user.getStateAbbr());
+            } else if ("STORE_MANAGER".equals(role)) {
+                whereClauses.add("o.storeid = ?");
+                params.add(user.getStoreId());
+            }
         }
         
+        if (year != null) {
+            whereClauses.add("EXTRACT(YEAR FROM o.orderdate) = ?");
+            params.add(year);
+        }
+        if (month != null) {
+            whereClauses.add("EXTRACT(MONTH FROM o.orderdate) = ?");
+            params.add(month);
+        }
         if (category != null && !category.trim().isEmpty()) {
-            sql.append(" AND p.category ILIKE ?");
+            whereClauses.add("p.category ILIKE ?");
             params.add("%" + category + "%");
         }
-        
+        if (storeIds != null && !storeIds.isEmpty()) {
+            whereClauses.add("o.storeid IN (" + String.join(",", Collections.nCopies(storeIds.size(), "?")) + ")");
+            params.addAll(storeIds);
+        }
+
+        if (!whereClauses.isEmpty()) {
+            sql.append(" WHERE ").append(String.join(" AND ", whereClauses));
+        }
+
         try {
             Map<String, Object> result = jdbcTemplate.queryForMap(sql.toString(), params.toArray());
             
@@ -3196,6 +3316,11 @@ public class OptimizedPizzaService {
         };
     }
 
+    @Cacheable(value = "customerLifetimeValueFiltered", key = "#user.role + '_' + #user.storeId + '_' + #user.stateAbbr + '_' + #limit + '_' + #states + '_' + #storeIds")
+    public List<Map<String, Object>> getCustomerLifetimeValue(User user, Integer limit, List<String> states, List<String> storeIds) {
+        return getFilteredCustomerLifetimeValue(user, limit, states, storeIds);
+    }
+
     @Cacheable(value = "customerLifetimeValueSummary", key = "#user.role + '_' + #user.storeId + '_' + #user.stateAbbr")
     public Map<String, Object> getCustomerLifetimeValueSummary(User user) {
         return switch (user.getRole()) {
@@ -3204,6 +3329,11 @@ public class OptimizedPizzaService {
             case "STORE_MANAGER" -> repo.getCustomerLifetimeValueSummaryStore(user.getStoreId());
             default -> throw new AccessDeniedException("Unknown role: " + user.getRole());
         };
+    }
+
+    @Cacheable(value = "customerLifetimeValueSummaryFiltered", key = "#user.role + '_' + #user.storeId + '_' + #user.stateAbbr + '_' + #states + '_' + #storeIds")
+    public Map<String, Object> getCustomerLifetimeValueSummary(User user, List<String> states, List<String> storeIds) {
+        return getFilteredCustomerLifetimeValueSummary(user, states, storeIds);
     }
 
     // =================================================================
@@ -3218,6 +3348,11 @@ public class OptimizedPizzaService {
             case "STORE_MANAGER" -> repo.getCustomerRetentionAnalysisStore(user.getStoreId(), limit);
             default -> throw new AccessDeniedException("Unknown role: " + user.getRole());
         };
+    }
+
+    @Cacheable(value = "customerRetentionAnalysisFiltered", key = "#user.role + '_' + #user.storeId + '_' + #user.stateAbbr + '_' + #limit + '_' + #states + '_' + #storeIds")
+    public List<Map<String, Object>> getCustomerRetentionAnalysis(User user, Integer limit, List<String> states, List<String> storeIds) {
+        return getFilteredCustomerRetentionAnalysis(user, limit, states, storeIds);
     }
 
     // =================================================================
@@ -3271,6 +3406,11 @@ public class OptimizedPizzaService {
         };
     }
 
+    @Cacheable(value = "storeCapacityV3SummaryFiltered", key = "#user.role + '_' + #user.storeId + '_' + #user.stateAbbr + '_' + #states + '_' + #storeIds")
+    public List<Map<String, Object>> getStoreCapacityV3Summary(User user, List<String> states, List<String> storeIds) {
+        return getFilteredStoreCapacityV3Summary(user, states, storeIds);
+    }
+
     @Cacheable(value = "storeCapacityV3Metrics", key = "#user.role + '_' + #user.storeId + '_' + #user.stateAbbr + '_' + #year + '_' + #month")
     public List<Map<String, Object>> getStoreCapacityV3Metrics(User user, Integer year, Integer month) {
         return switch (user.getRole()) {
@@ -3291,6 +3431,11 @@ public class OptimizedPizzaService {
         };
     }
 
+    @Cacheable(value = "storeCapacityV3PeakHoursFiltered", key = "#user.role + '_' + #user.storeId + '_' + #user.stateAbbr + '_' + #states + '_' + #storeIds")
+    public List<Map<String, Object>> getStoreCapacityV3PeakHours(User user, List<String> states, List<String> storeIds) {
+        return getFilteredStoreCapacityV3PeakHours(user, states, storeIds);
+    }
+
     @Cacheable(value = "storeCapacityV3CustomerDistance", key = "#user.role + '_' + #user.storeId + '_' + #user.stateAbbr")
     public Map<String, Object> getStoreCapacityV3CustomerDistance(User user) {
         List<Map<String, Object>> distances = switch (user.getRole()) {
@@ -3307,6 +3452,11 @@ public class OptimizedPizzaService {
         return result;
     }
 
+    @Cacheable(value = "storeCapacityV3CustomerDistanceFiltered", key = "#user.role + '_' + #user.storeId + '_' + #user.stateAbbr + '_' + #states + '_' + #storeIds")
+    public Map<String, Object> getStoreCapacityV3CustomerDistance(User user, List<String> states, List<String> storeIds) {
+        return getFilteredStoreCapacityV3CustomerDistance(user, states, storeIds);
+    }
+
     @Cacheable(value = "storeCapacityV3DeliveryMetrics", key = "#user.role + '_' + #user.storeId + '_' + #user.stateAbbr + '_' + #year + '_' + #month")
     public List<Map<String, Object>> getStoreCapacityV3DeliveryMetrics(User user, Integer year, Integer month) {
         return switch (user.getRole()) {
@@ -3317,6 +3467,11 @@ public class OptimizedPizzaService {
         };
     }
 
+    @Cacheable(value = "storeCapacityV3DeliveryMetricsFiltered", key = "#user.role + '_' + #user.storeId + '_' + #user.stateAbbr + '_' + #year + '_' + #month + '_' + #states + '_' + #storeIds")
+    public List<Map<String, Object>> getStoreCapacityV3DeliveryMetrics(User user, Integer year, Integer month, List<String> states, List<String> storeIds) {
+        return getFilteredStoreCapacityV3DeliveryMetrics(user, year, month, states, storeIds);
+    }
+
     @Cacheable(value = "storeCapacityV3UtilizationChart", key = "#user.role + '_' + #user.storeId + '_' + #user.stateAbbr + '_' + #year + '_' + #month")
     public List<Map<String, Object>> getStoreCapacityV3UtilizationChart(User user, Integer year, Integer month) {
         return switch (user.getRole()) {
@@ -3325,6 +3480,528 @@ public class OptimizedPizzaService {
             case "STORE_MANAGER" -> repo.getStoreCapacityV3UtilizationChartStore(user.getStoreId(), year, month);
             default -> throw new AccessDeniedException("Unknown role: " + user.getRole());
         };
+    }
+
+    // =================================================================
+    // FILTERED CUSTOMER ANALYTICS HELPER METHODS
+    // =================================================================
+
+    private List<Map<String, Object>> getFilteredCustomerAcquisitionAnalytics(User user, List<String> states, List<String> storeIds) {
+        // If no filters provided, use the regular role-based method
+        if ((states == null || states.isEmpty()) && (storeIds == null || storeIds.isEmpty())) {
+            return getCustomerAcquisitionAnalytics(user);
+        }
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT 
+                EXTRACT(YEAR FROM o.orderdate) as year,
+                EXTRACT(MONTH FROM o.orderdate) as month,
+                TO_CHAR(o.orderdate, 'Month YYYY') as month_name,
+                COUNT(DISTINCT o.customerid) as new_customers,
+                SUM(o.total) as revenue_from_new_customers
+            FROM orders o
+            JOIN stores s ON o.storeid = s.storeid
+            WHERE 1=1
+            """);
+
+        List<Object> params = new ArrayList<>();
+
+        // Apply role-based restrictions first
+        switch (user.getRole()) {
+            case "STATE_MANAGER":
+                sql.append(" AND s.state_abbr = ?");
+                params.add(user.getStateAbbr());
+                break;
+            case "STORE_MANAGER":
+                sql.append(" AND o.storeid = ?");
+                params.add(user.getStoreId());
+                break;
+            // HQ_ADMIN has no base restrictions
+        }
+
+        // Apply additional filters if provided
+        if (states != null && !states.isEmpty()) {
+            sql.append(" AND s.state_abbr IN (");
+            for (int i = 0; i < states.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(states);
+        }
+
+        if (storeIds != null && !storeIds.isEmpty()) {
+            sql.append(" AND o.storeid IN (");
+            for (int i = 0; i < storeIds.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(storeIds);
+        }
+
+        sql.append("""
+             GROUP BY EXTRACT(YEAR FROM o.orderdate), EXTRACT(MONTH FROM o.orderdate), TO_CHAR(o.orderdate, 'Month YYYY')
+             ORDER BY year DESC, month DESC
+             LIMIT 12
+             """);
+
+        return jdbcTemplate.queryForList(sql.toString(), params.toArray());
+    }
+
+    private List<Map<String, Object>> getFilteredCustomerLifetimeValue(User user, Integer limit, List<String> states, List<String> storeIds) {
+        // If no filters provided, use the regular role-based method
+        if ((states == null || states.isEmpty()) && (storeIds == null || storeIds.isEmpty())) {
+            return getCustomerLifetimeValue(user, limit);
+        }
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT 
+                o.customerid,
+                COUNT(o.orderid) as total_orders,
+                SUM(o.total) as total_spent,
+                AVG(o.total) as avg_order_value,
+                MIN(o.orderdate) as first_order_date,
+                MAX(o.orderdate) as last_order_date,
+                EXTRACT(DAY FROM MAX(o.orderdate) - MIN(o.orderdate)) as customer_lifespan_days,
+                COUNT(DISTINCT o.storeid) as stores_visited,
+                CASE
+                    WHEN COUNT(o.orderid) >= 10 THEN 'VIP'
+                    WHEN COUNT(o.orderid) >= 5 THEN 'Regular'
+                    WHEN COUNT(o.orderid) >= 2 THEN 'Occasional'
+                    ELSE 'One-time'
+                END as customer_segment
+            FROM orders o
+            JOIN stores s ON o.storeid = s.storeid
+            WHERE 1=1
+            """);
+
+        List<Object> params = new ArrayList<>();
+
+        // Apply role-based restrictions first
+        switch (user.getRole()) {
+            case "STATE_MANAGER":
+                sql.append(" AND s.state_abbr = ?");
+                params.add(user.getStateAbbr());
+                break;
+            case "STORE_MANAGER":
+                sql.append(" AND o.storeid = ?");
+                params.add(user.getStoreId());
+                break;
+        }
+
+        // Apply additional filters if provided
+        if (states != null && !states.isEmpty()) {
+            sql.append(" AND s.state_abbr IN (");
+            for (int i = 0; i < states.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(states);
+        }
+
+        if (storeIds != null && !storeIds.isEmpty()) {
+            sql.append(" AND o.storeid IN (");
+            for (int i = 0; i < storeIds.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(storeIds);
+        }
+
+        sql.append("""
+             GROUP BY o.customerid
+             ORDER BY total_spent DESC
+             LIMIT ?
+             """);
+        params.add(limit);
+
+        return jdbcTemplate.queryForList(sql.toString(), params.toArray());
+    }
+
+    private Map<String, Object> getFilteredCustomerLifetimeValueSummary(User user, List<String> states, List<String> storeIds) {
+        // If no filters provided, use the regular role-based method
+        if ((states == null || states.isEmpty()) && (storeIds == null || storeIds.isEmpty())) {
+            return getCustomerLifetimeValueSummary(user);
+        }
+
+        StringBuilder sql = new StringBuilder("""
+            WITH customer_data AS (
+                SELECT 
+                    o.customerid,
+                    SUM(o.total) as total_spent,
+                    COUNT(o.orderid) as total_orders,
+                    MIN(o.orderdate) as first_order_date,
+                    MAX(o.orderdate) as last_order_date,
+                    EXTRACT(DAY FROM MAX(o.orderdate) - MIN(o.orderdate)) as customer_lifespan_days
+                FROM orders o
+                JOIN stores s ON o.storeid = s.storeid
+                WHERE 1=1
+            """);
+
+        List<Object> params = new ArrayList<>();
+
+        // Apply role-based restrictions first
+        switch (user.getRole()) {
+            case "STATE_MANAGER":
+                sql.append(" AND s.state_abbr = ?");
+                params.add(user.getStateAbbr());
+                break;
+            case "STORE_MANAGER":
+                sql.append(" AND o.storeid = ?");
+                params.add(user.getStoreId());
+                break;
+        }
+
+        // Apply additional filters if provided
+        if (states != null && !states.isEmpty()) {
+            sql.append(" AND s.state_abbr IN (");
+            for (int i = 0; i < states.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(states);
+        }
+
+        if (storeIds != null && !storeIds.isEmpty()) {
+            sql.append(" AND o.storeid IN (");
+            for (int i = 0; i < storeIds.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(storeIds);
+        }
+
+        sql.append("""
+                GROUP BY o.customerid
+            ),
+            customer_segments AS (
+                SELECT 
+                    customerid,
+                    total_spent,
+                    total_orders,
+                    customer_lifespan_days,
+                    CASE
+                        WHEN total_orders >= 10 THEN 'VIP'
+                        WHEN total_orders >= 5 THEN 'Regular'
+                        WHEN total_orders >= 2 THEN 'Occasional'
+                        ELSE 'One-time'
+                    END as customer_segment
+                FROM customer_data
+            )
+            SELECT 
+                COUNT(DISTINCT customerid) as total_customers,
+                AVG(total_spent) as avg_customer_value,
+                AVG(total_orders) as avg_orders_per_customer,
+                AVG(customer_lifespan_days) as avg_customer_lifespan,
+                COUNT(CASE WHEN customer_segment = 'VIP' THEN 1 END) as vip_customers,
+                COUNT(CASE WHEN customer_segment = 'Regular' THEN 1 END) as regular_customers,
+                COUNT(CASE WHEN customer_segment = 'Occasional' THEN 1 END) as occasional_customers,
+                COUNT(CASE WHEN customer_segment = 'One-time' THEN 1 END) as one_time_customers
+            FROM customer_segments
+            """);
+
+        return jdbcTemplate.queryForMap(sql.toString(), params.toArray());
+    }
+
+    private List<Map<String, Object>> getFilteredCustomerRetentionAnalysis(User user, Integer limit, List<String> states, List<String> storeIds) {
+        // If no filters provided, use the regular role-based method
+        if ((states == null || states.isEmpty()) && (storeIds == null || storeIds.isEmpty())) {
+            return getCustomerRetentionAnalysis(user, limit);
+        }
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT 
+                EXTRACT(YEAR FROM o.orderdate) as year,
+                EXTRACT(MONTH FROM o.orderdate) as month,
+                TO_CHAR(o.orderdate, 'YYYY-MM') as period,
+                COUNT(DISTINCT o.customerid) as total_customers,
+                COUNT(DISTINCT CASE 
+                    WHEN EXISTS (
+                        SELECT 1 FROM orders o2 
+                        WHERE o2.customerid = o.customerid 
+                        AND o2.orderdate < o.orderdate
+                    ) THEN o.customerid 
+                END) as returning_customers
+            FROM orders o
+            JOIN stores s ON o.storeid = s.storeid
+            WHERE 1=1
+            """);
+
+        List<Object> params = new ArrayList<>();
+
+        // Apply role-based restrictions first
+        switch (user.getRole()) {
+            case "STATE_MANAGER":
+                sql.append(" AND s.state_abbr = ?");
+                params.add(user.getStateAbbr());
+                break;
+            case "STORE_MANAGER":
+                sql.append(" AND o.storeid = ?");
+                params.add(user.getStoreId());
+                break;
+        }
+
+        // Apply additional filters if provided
+        if (states != null && !states.isEmpty()) {
+            sql.append(" AND s.state_abbr IN (");
+            for (int i = 0; i < states.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(states);
+        }
+
+        if (storeIds != null && !storeIds.isEmpty()) {
+            sql.append(" AND o.storeid IN (");
+            for (int i = 0; i < storeIds.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(storeIds);
+        }
+
+        sql.append("""
+             GROUP BY EXTRACT(YEAR FROM o.orderdate), EXTRACT(MONTH FROM o.orderdate), TO_CHAR(o.orderdate, 'YYYY-MM')
+             ORDER BY year DESC, month DESC
+             LIMIT ?
+             """);
+        params.add(limit);
+
+        return jdbcTemplate.queryForList(sql.toString(), params.toArray());
+    }
+
+    // =================================================================
+    // FILTERED STORE CAPACITY V3 HELPER METHODS
+    // =================================================================
+
+    private List<Map<String, Object>> getFilteredStoreCapacityV3Summary(User user, List<String> states, List<String> storeIds) {
+        // If no filters provided, use the regular role-based method
+        if ((states == null || states.isEmpty()) && (storeIds == null || storeIds.isEmpty())) {
+            return getStoreCapacityV3Summary(user);
+        }
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT * FROM store_capacity_summary_v3
+            WHERE 1=1
+            """);
+
+        List<Object> params = new ArrayList<>();
+
+        // Apply role-based restrictions first
+        switch (user.getRole()) {
+            case "STATE_MANAGER":
+                sql.append(" AND state_abbr = ?");
+                params.add(user.getStateAbbr());
+                break;
+            case "STORE_MANAGER":
+                sql.append(" AND storeid = ?");
+                params.add(user.getStoreId());
+                break;
+        }
+
+        // Apply additional filters if provided
+        if (states != null && !states.isEmpty()) {
+            sql.append(" AND state_abbr IN (");
+            for (int i = 0; i < states.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(states);
+        }
+
+        if (storeIds != null && !storeIds.isEmpty()) {
+            sql.append(" AND storeid IN (");
+            for (int i = 0; i < storeIds.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(storeIds);
+        }
+
+        sql.append(" ORDER BY avg_utilization DESC");
+
+        return jdbcTemplate.queryForList(sql.toString(), params.toArray());
+    }
+
+    private List<Map<String, Object>> getFilteredStoreCapacityV3PeakHours(User user, List<String> states, List<String> storeIds) {
+        // If no filters provided, use the regular role-based method
+        if ((states == null || states.isEmpty()) && (storeIds == null || storeIds.isEmpty())) {
+            return getStoreCapacityV3PeakHours(user);
+        }
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT sph.* FROM store_peak_hours_v3 sph
+            JOIN stores s ON sph.storeid = s.storeid
+            WHERE 1=1
+            """);
+
+        List<Object> params = new ArrayList<>();
+
+        // Apply role-based restrictions first
+        switch (user.getRole()) {
+            case "STATE_MANAGER":
+                sql.append(" AND s.state_abbr = ?");
+                params.add(user.getStateAbbr());
+                break;
+            case "STORE_MANAGER":
+                sql.append(" AND sph.storeid = ?");
+                params.add(user.getStoreId());
+                break;
+        }
+
+        // Apply additional filters if provided
+        if (states != null && !states.isEmpty()) {
+            sql.append(" AND s.state_abbr IN (");
+            for (int i = 0; i < states.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(states);
+        }
+
+        if (storeIds != null && !storeIds.isEmpty()) {
+            sql.append(" AND sph.storeid IN (");
+            for (int i = 0; i < storeIds.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(storeIds);
+        }
+
+        sql.append(" ORDER BY sph.storeid, sph.avg_orders DESC");
+
+        return jdbcTemplate.queryForList(sql.toString(), params.toArray());
+    }
+
+    private Map<String, Object> getFilteredStoreCapacityV3CustomerDistance(User user, List<String> states, List<String> storeIds) {
+        // If no filters provided, use the regular role-based method
+        if ((states == null || states.isEmpty()) && (storeIds == null || storeIds.isEmpty())) {
+            return getStoreCapacityV3CustomerDistance(user);
+        }
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT cda.* FROM customer_distance_analysis_v3 cda
+            JOIN stores s ON cda.storeid = s.storeid
+            WHERE 1=1
+            """);
+
+        List<Object> params = new ArrayList<>();
+
+        // Apply role-based restrictions first
+        switch (user.getRole()) {
+            case "STATE_MANAGER":
+                sql.append(" AND s.state_abbr = ?");
+                params.add(user.getStateAbbr());
+                break;
+            case "STORE_MANAGER":
+                sql.append(" AND cda.storeid = ?");
+                params.add(user.getStoreId());
+                break;
+        }
+
+        // Apply additional filters if provided
+        if (states != null && !states.isEmpty()) {
+            sql.append(" AND s.state_abbr IN (");
+            for (int i = 0; i < states.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(states);
+        }
+
+        if (storeIds != null && !storeIds.isEmpty()) {
+            sql.append(" AND cda.storeid IN (");
+            for (int i = 0; i < storeIds.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(storeIds);
+        }
+
+        sql.append(" ORDER BY cda.storeid, cda.distance_category");
+
+        List<Map<String, Object>> distances = jdbcTemplate.queryForList(sql.toString(), params.toArray());
+        
+        // Aggregate distance data
+        Map<String, Object> result = new HashMap<>();
+        result.put("distances", distances);
+        result.put("total_customers", distances.size());
+        return result;
+    }
+
+    private List<Map<String, Object>> getFilteredStoreCapacityV3DeliveryMetrics(User user, Integer year, Integer month, List<String> states, List<String> storeIds) {
+        // If no filters provided, use the regular role-based method
+        if ((states == null || states.isEmpty()) && (storeIds == null || storeIds.isEmpty())) {
+            return getStoreCapacityV3DeliveryMetrics(user, year, month);
+        }
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT dm.* FROM delivery_metrics_v3 dm
+            JOIN stores s ON dm.storeid = s.storeid
+            WHERE 1=1
+            """);
+
+        List<Object> params = new ArrayList<>();
+
+        // Apply role-based restrictions first
+        switch (user.getRole()) {
+            case "STATE_MANAGER":
+                sql.append(" AND s.state_abbr = ?");
+                params.add(user.getStateAbbr());
+                break;
+            case "STORE_MANAGER":
+                sql.append(" AND dm.storeid = ?");
+                params.add(user.getStoreId());
+                break;
+        }
+
+        // Apply time filters if provided
+        if (year != null) {
+            sql.append(" AND dm.year = ?");
+            params.add(year);
+        }
+        if (month != null) {
+            sql.append(" AND dm.month = ?");
+            params.add(month);
+        }
+
+        // Apply additional filters if provided
+        if (states != null && !states.isEmpty()) {
+            sql.append(" AND s.state_abbr IN (");
+            for (int i = 0; i < states.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(states);
+        }
+
+        if (storeIds != null && !storeIds.isEmpty()) {
+            sql.append(" AND dm.storeid IN (");
+            for (int i = 0; i < storeIds.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append(")");
+            params.addAll(storeIds);
+        }
+
+        sql.append(" ORDER BY dm.storeid, dm.year, dm.month, dm.delivery_date");
+
+        return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }
 
 }

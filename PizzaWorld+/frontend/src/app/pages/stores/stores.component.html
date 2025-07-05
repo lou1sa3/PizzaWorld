@@ -55,7 +55,7 @@
               (keydown.enter)="onStoreIdFilterChange()"
               [disabled]="loading"
               type="text"
-              placeholder="e.g. S302800"
+              placeholder="Store ID..."
               class="px-4 py-2 border-2 border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white text-gray-700 font-medium disabled:opacity-50">
           </div>
 
@@ -132,7 +132,7 @@
           </div>
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-600">Total Stores</p>
-            <p class="text-2xl font-bold text-gray-900">{{ getTotalStores() }}</p>
+            <p class="text-2xl font-bold text-gray-900">{{ formatWholeNumberWithDots(getTotalStores()) }}</p>
             <p class="text-sm text-gray-500">{{ getUniqueStatesCount() }} states</p>
           </div>
         </div>
@@ -148,7 +148,7 @@
           </div>
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-600">Total Revenue</p>
-            <p class="text-2xl font-bold text-gray-900">${{ getTotalRevenue().toLocaleString() }}</p>
+            <p class="text-2xl font-bold text-gray-900">${{ formatNumberWithDots(getTotalRevenue()) }}</p>
             <p class="text-sm text-gray-500">All time</p>
           </div>
         </div>
@@ -164,7 +164,7 @@
           </div>
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-600">Total Orders</p>
-            <p class="text-2xl font-bold text-gray-900">{{ getTotalOrders().toLocaleString() }}</p>
+            <p class="text-2xl font-bold text-gray-900">{{ formatWholeNumberWithDots(getTotalOrders()) }}</p>
             <p class="text-sm text-gray-500">All stores</p>
           </div>
         </div>
@@ -180,7 +180,7 @@
           </div>
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-600">Avg Order Value</p>
-            <p class="text-2xl font-bold text-gray-900">${{ getAverageOrderValue().toFixed(2) }}</p>
+            <p class="text-2xl font-bold text-gray-900">${{ formatNumberWithDots(getAverageOrderValue()) }}</p>
             <p class="text-sm text-gray-500">Per order</p>
           </div>
         </div>

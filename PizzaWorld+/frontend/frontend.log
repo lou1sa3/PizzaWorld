@@ -1,7 +1,0 @@
-
-> frontend@0.0.0 start
-> ng serve --proxy-config proxy.conf.json
-
-Component HMR has been enabled, see https://angular.dev/hmr for more info.
-An unhandled exception occurred: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.
-See "/tmp/ng-yVJBa2/angular-errors.log" for further details.

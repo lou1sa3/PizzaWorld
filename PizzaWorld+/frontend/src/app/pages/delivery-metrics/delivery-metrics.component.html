@@ -5,7 +5,7 @@
 
   <!-- Header Section -->
   <div class="mb-8">
-    <div class="bg-white rounded-2xl shadow-xl border border-orange-100 overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-xl border border-orange-100 overflow-visible" style="position: relative; z-index: 5;">
       <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-8 text-white">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -15,7 +15,7 @@
               </svg>
               <h1 class="text-3xl font-bold">Delivery Metrics</h1>
             </div>
-            <p class="text-orange-100 text-lg">Comprehensive delivery performance analytics and insights</p>
+            <p class="text-orange-100 text-lg">Comprehensive delivery performance analytics and insights • {{ getFilterLabel() }}</p>
           </div>
           <div class="mt-4 sm:mt-0 flex gap-3">
             <button
@@ -43,6 +43,92 @@
         </div>
       </div>
 
+      <!-- Filters Section -->
+      <div class="px-6 py-6 bg-gradient-to-r from-orange-25 to-orange-50" style="overflow: visible; position: relative; z-index: 10;">
+        <!-- Filter Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-end">
+
+          <!-- State Filter Dropdown -->
+          <div *ngIf="currentUser?.role === 'HQ_ADMIN' || currentUser?.role === 'STATE_MANAGER'" class="flex flex-col dropdown-container">
+            <label class="text-sm font-semibold text-gray-700 mb-1">States</label>
+            <div class="relative">
+              <button
+                type="button"
+                (click)="toggleStateDropdown()"
+                [disabled]="loading"
+                class="w-full px-4 py-2 border-2 border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white text-gray-700 font-medium disabled:opacity-50 text-left flex justify-between items-center">
+                <span>{{ getSelectedStatesText() }}</span>
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              <div *ngIf="showStateDropdown" class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto" style="z-index: 9999;">
+                <div class="p-2">
+                  <label *ngFor="let state of availableStates" class="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer">
+                    <input
+                      type="checkbox"
+                      [value]="state.state_code"
+                      [checked]="selectedStates.includes(state.state_code)"
+                      (change)="toggleStateSelection(state.state_code)"
+                      class="mr-2 text-orange-600 focus:ring-orange-500">
+                    <span class="text-sm text-gray-700">{{ state.state }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Store Filter Dropdown -->
+          <div *ngIf="currentUser?.role === 'HQ_ADMIN' || currentUser?.role === 'STATE_MANAGER'" class="flex flex-col dropdown-container">
+            <label class="text-sm font-semibold text-gray-700 mb-1">Stores</label>
+            <div class="relative">
+              <button
+                type="button"
+                (click)="toggleStoreDropdown()"
+                [disabled]="loading"
+                class="w-full px-4 py-2 border-2 border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white text-gray-700 font-medium disabled:opacity-50 text-left flex justify-between items-center">
+                <span>{{ getSelectedStoresText() }}</span>
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              <div *ngIf="showStoreDropdown" class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto" style="z-index: 9999;">
+                <div class="p-2">
+                  <label *ngFor="let store of availableStores" class="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer">
+                    <input
+                      type="checkbox"
+                      [value]="store.storeid"
+                      [checked]="selectedStores.includes(store.storeid)"
+                      (change)="toggleStoreSelection(store.storeid)"
+                      class="mr-2 text-orange-600 focus:ring-orange-500">
+                    <span class="text-sm text-gray-700">{{ store.city }}, {{ store.state }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty columns for spacing -->
+          <div class="hidden xl:block"></div>
+          <div class="hidden xl:block"></div>
+          <div class="hidden xl:block"></div>
+
+          <!-- Filter Action Buttons -->
+          <div class="flex justify-end gap-3 xl:col-span-1">
+            <button
+              (click)="applyFilters()"
+              class="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors">
+              Apply Filters
+            </button>
+            <button
+              (click)="clearAllFilters()"
+              [disabled]="!hasActiveFilters()"
+              class="px-6 py-2 bg-orange-100 hover:bg-orange-200 text-orange-800 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              Clear All
+            </button>
+          </div>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -218,6 +304,7 @@
       <div class="bg-white rounded-xl shadow-lg border border-orange-100 p-6">
         <div class="flex justify-between items-center mb-4">
           <h4 class="text-lg font-semibold text-gray-900">Store Utilization Analysis</h4>
+          <div class="text-sm text-gray-500">{{ getFilterLabel() }}</div>
         </div>
         <div *ngIf="!chartsLoading && utilizationChart" class="animate-fade-in">
           <apx-chart
@@ -242,6 +329,7 @@
       <div class="bg-white rounded-xl shadow-lg border border-orange-100 p-6">
         <div class="flex justify-between items-center mb-4">
           <h4 class="text-lg font-semibold text-gray-900">Delivery Trends</h4>
+          <div class="text-sm text-gray-500">{{ getFilterLabel() }}</div>
         </div>
         <div *ngIf="!chartsLoading && deliveryTrendsChart" class="animate-fade-in">
           <apx-chart
@@ -265,6 +353,7 @@
       <div class="bg-white rounded-xl shadow-lg border border-orange-100 p-6">
         <div class="flex justify-between items-center mb-4">
           <h4 class="text-lg font-semibold text-gray-900">Customer Distance Distribution</h4>
+          <div class="text-sm text-gray-500">{{ getFilterLabel() }}</div>
         </div>
         <div *ngIf="!chartsLoading && customerDistanceChart" class="animate-fade-in">
           <apx-chart
@@ -288,6 +377,7 @@
       <div class="bg-white rounded-xl shadow-lg border border-orange-100 p-6">
         <div class="flex justify-between items-center mb-4">
           <h4 class="text-lg font-semibold text-gray-900">Delivery Cost Analysis</h4>
+          <div class="text-sm text-gray-500">{{ getFilterLabel() }}</div>
         </div>
         <div *ngIf="!chartsLoading && costAnalysisChart" class="animate-fade-in">
           <apx-chart
@@ -355,10 +445,7 @@
                    </div>
                  </div>
               </th>
-              <th (click)="sortSummaryTable('total_customers')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                Total Customers
-                <span *ngIf="summarySort.column === 'total_customers'" class="ml-1">{{ summarySort.ascending ? '↑' : '↓' }}</span>
-              </th>
+
               <th (click)="sortSummaryTable('avg_customer_distance')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
                 Avg Distance
                 <span *ngIf="summarySort.column === 'avg_customer_distance'" class="ml-1">{{ summarySort.ascending ? '↑' : '↓' }}</span>
@@ -383,7 +470,7 @@
                   {{ store.avg_utilization.toFixed(1) }}%
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatNumber(store.total_customers) }}</td>
+
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ store.avg_customer_distance.toFixed(1) }} mi</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ store.avg_daily_miles.toFixed(1) }} mi</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-orange-600">{{ formatCurrency(store.total_delivery_cost) }}</td>

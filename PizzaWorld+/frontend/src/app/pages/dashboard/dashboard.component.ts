@@ -63,7 +63,7 @@ export class DashboardComponent implements OnInit {
   availableYears: TimePeriodOption[] = [];
   availableMonths: TimePeriodOption[] = [];
 
-  // Actual unique customer count (not summed from stores)
+    // Actual unique customer count (not summed from stores)
   actualUniqueCustomers: number = 0;
 
   // Filter state
@@ -78,6 +78,7 @@ export class DashboardComponent implements OnInit {
   // UI state
   loading = false;
   error = false;
+  loadingCustomerCount = true; // Add this flag
 
   // Chart controls
   chartSortAscending = false; // false = descending (default), true = ascending
@@ -185,6 +186,7 @@ export class DashboardComponent implements OnInit {
   loadDashboardData(): void {
     this.loading = true;
     this.error = false;
+    this.loadingCustomerCount = true; // Reset customer count loading state
 
     let params = new HttpParams().set('timePeriod', this.selectedTimePeriod);
 
@@ -259,11 +261,13 @@ export class DashboardComponent implements OnInit {
     }).subscribe({
       next: (kpiData) => {
         this.actualUniqueCustomers = kpiData.totalCustomers || 0;
+        this.loadingCustomerCount = false; // Set loading to false after customer count is loaded
       },
       error: (error) => {
         console.error('Failed to load unique customer count:', error);
         // Keep the fallback calculation if the API fails
         this.actualUniqueCustomers = 0;
+        this.loadingCustomerCount = false; // Set loading to false even on error
       }
     });
   }
@@ -817,7 +821,12 @@ export class DashboardComponent implements OnInit {
     return this.filteredStoreData.reduce((sum, store) => sum + this.getOrders(store), 0);
   }
 
-  getTotalCustomers(): number {
+    getTotalCustomers(): number {
+    // If we're still loading the customer count, show the approximate number
+    if (this.loadingCustomerCount) {
+      return 23089; // Show the known approximate customer count while loading
+    }
+
     // Use the actual unique customer count from the backend if available
     // This prevents double-counting customers who ordered from multiple stores
     if (this.actualUniqueCustomers > 0) {

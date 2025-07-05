@@ -22,6 +22,8 @@ import {
   ChartComponent
 } from 'ng-apexcharts';
 import { Router } from '@angular/router';
+import { AuthService } from '../../core/auth.service';
+import { CurrentUser } from '../../core/models/current-user.model';
 
 interface Product {
   sku: string;
@@ -30,6 +32,17 @@ interface Product {
   price: number;
   category: string;
   launch_date: string;
+}
+
+interface Store {
+  storeid: string;
+  city: string;
+  state: string;
+}
+
+interface State {
+  state_code: string;
+  state: string;
 }
 
 interface ProductPerformance {
@@ -104,11 +117,19 @@ export class ProductsComponent implements OnInit, OnDestroy {
   selectedCategory: string = '';
   searchTerm: string = '';
   skuFilter: string = '';
+  selectedStores: string[] = [];
+  selectedStates: string[] = [];
+
+  // Dropdown state
+  showStateDropdown: boolean = false;
+  showStoreDropdown: boolean = false;
 
   // Available filter options
   availableYears: TimePeriodOption[] = [];
   availableMonths: TimePeriodOption[] = [];
   availableCategories: string[] = ['Vegetarian', 'Specialty', 'Classic'];
+  availableStores: Store[] = [];
+  availableStates: State[] = [];
 
   // Data
   catalogueProducts: Product[] = [];
@@ -142,10 +163,26 @@ export class ProductsComponent implements OnInit, OnDestroy {
     '#E55A2B', '#CC4F24', '#B3441C', '#993915', '#802E0E'
   ];
 
-  constructor(private http: HttpClient, private router: Router) {}
+  currentUser: CurrentUser | null = null;
+
+  constructor(private http: HttpClient, private router: Router, private auth: AuthService) {}
 
   ngOnInit(): void {
-    this.loadInitialData();
+    this.auth.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      this.loadInitialData();
+      this.loadAvailableStores();
+      this.loadAvailableStates();
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.dropdown-container')) {
+        this.showStateDropdown = false;
+        this.showStoreDropdown = false;
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -194,6 +231,20 @@ export class ProductsComponent implements OnInit, OnDestroy {
     if (this.selectedCategory) params = params.set('category', this.selectedCategory);
     if (this.searchTerm) params = params.set('search', this.searchTerm);
 
+    if (this.currentUser?.role === 'STATE_MANAGER') {
+      params = params.set('state', this.currentUser.stateAbbr);
+    } else if (this.currentUser?.role === 'STORE_MANAGER') {
+      params = params.set('storeId', this.currentUser.storeId);
+    }
+
+    if (this.selectedStores.length > 0) {
+      params = params.set('storeIds', this.selectedStores.join(','));
+    }
+
+    if (this.selectedStates.length > 0) {
+      params = params.set('states', this.selectedStates.join(','));
+    }
+
     this.chartsLoading = true;
     this.http.get<ProductPerformance[]>('/api/v2/products/performance', {
       headers: this.getAuthHeaders(),
@@ -236,12 +287,14 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.skuFilter = '';
     // Reset available months when clearing year filter
     this.availableMonths = [];
+    this.selectedStores = [];
+    this.selectedStates = []; // Clear selected states
     // Reload all data without filters
     this.applyFilters();
   }
 
   hasActiveFilters(): boolean {
-    return !!(this.selectedYear || this.selectedMonth || this.selectedCategory || this.searchTerm || this.skuFilter);
+    return !!(this.selectedYear || this.selectedMonth || this.selectedCategory || this.searchTerm || this.skuFilter || this.selectedStores.length > 0 || this.selectedStates.length > 0);
   }
 
   onYearChange(): void {
@@ -257,6 +310,22 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   onSkuFilterChange(): void {
     this.loadCatalogueData();
+  }
+
+  loadAvailableStores(): void {
+    if (this.currentUser?.role === 'HQ_ADMIN' || this.currentUser?.role === 'STATE_MANAGER') {
+      this.http.get<Store[]>('/api/v2/stores', { headers: this.getAuthHeaders() })
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (stores) => {
+            this.availableStores = stores || [];
+          },
+          error: (error) => {
+            console.error('Error loading stores:', error);
+            this.availableStores = [];
+          }
+        });
+    }
   }
 
   loadAvailableMonths(): void {
@@ -276,6 +345,73 @@ export class ProductsComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadAvailableStates(): void {
+    if (this.currentUser?.role === 'HQ_ADMIN' || this.currentUser?.role === 'STATE_MANAGER') {
+      // Hardcoded list of available states
+      this.availableStates = [
+        { state_code: 'AZ', state: 'Arizona' },
+        { state_code: 'CA', state: 'California' },
+        { state_code: 'NV', state: 'Nevada' },
+        { state_code: 'UT', state: 'Utah' }
+      ];
+    }
+  }
+
+  // Dropdown methods
+  toggleStateDropdown(): void {
+    this.showStateDropdown = !this.showStateDropdown;
+    if (this.showStateDropdown) {
+      this.showStoreDropdown = false;
+    }
+  }
+
+  toggleStoreDropdown(): void {
+    this.showStoreDropdown = !this.showStoreDropdown;
+    if (this.showStoreDropdown) {
+      this.showStateDropdown = false;
+    }
+  }
+
+  toggleStateSelection(stateCode: string): void {
+    const index = this.selectedStates.indexOf(stateCode);
+    if (index === -1) {
+      this.selectedStates.push(stateCode);
+    } else {
+      this.selectedStates.splice(index, 1);
+    }
+  }
+
+  toggleStoreSelection(storeId: string): void {
+    const index = this.selectedStores.indexOf(storeId);
+    if (index === -1) {
+      this.selectedStores.push(storeId);
+    } else {
+      this.selectedStores.splice(index, 1);
+    }
+  }
+
+  getSelectedStatesText(): string {
+    if (this.selectedStates.length === 0) {
+      return 'All States';
+    } else if (this.selectedStates.length === 1) {
+      const state = this.availableStates.find(s => s.state_code === this.selectedStates[0]);
+      return state ? state.state : this.selectedStates[0];
+    } else {
+      return `${this.selectedStates.length} States Selected`;
+    }
+  }
+
+  getSelectedStoresText(): string {
+    if (this.selectedStores.length === 0) {
+      return 'All Stores';
+    } else if (this.selectedStores.length === 1) {
+      const store = this.availableStores.find(s => s.storeid === this.selectedStores[0]);
+      return store ? `${store.city}, ${store.state}` : this.selectedStores[0];
+    } else {
+      return `${this.selectedStores.length} Stores Selected`;
+    }
+  }
+
   loadCatalogueData(): void {
     let params = new HttpParams();
 
@@ -283,6 +419,20 @@ export class ProductsComponent implements OnInit, OnDestroy {
       // Combine search terms
       const searchQuery = [this.searchTerm, this.skuFilter].filter(Boolean).join(' ');
       params = params.set('search', searchQuery);
+    }
+
+    if (this.currentUser?.role === 'STATE_MANAGER') {
+      params = params.set('state', this.currentUser.stateAbbr);
+    } else if (this.currentUser?.role === 'STORE_MANAGER') {
+      params = params.set('storeId', this.currentUser.storeId);
+    }
+
+    if (this.selectedStores.length > 0) {
+      params = params.set('storeIds', this.selectedStores.join(','));
+    }
+
+    if (this.selectedStates.length > 0) {
+      params = params.set('states', this.selectedStates.join(','));
     }
 
     this.http.get<Product[]>('/api/v2/products', {
@@ -308,6 +458,20 @@ export class ProductsComponent implements OnInit, OnDestroy {
     if (this.selectedYear) params = params.set('year', this.selectedYear.toString());
     if (this.selectedMonth) params = params.set('month', this.selectedMonth.toString());
     if (this.selectedCategory) params = params.set('category', this.selectedCategory);
+
+    if (this.currentUser?.role === 'STATE_MANAGER') {
+      params = params.set('state', this.currentUser.stateAbbr);
+    } else if (this.currentUser?.role === 'STORE_MANAGER') {
+      params = params.set('storeId', this.currentUser.storeId);
+    }
+
+    if (this.selectedStores.length > 0) {
+      params = params.set('storeIds', this.selectedStores.join(','));
+    }
+
+    if (this.selectedStates.length > 0) {
+      params = params.set('states', this.selectedStates.join(','));
+    }
 
     this.http.get<ProductKPIs>('/api/v2/products/kpis', {
       headers: this.getAuthHeaders(),
@@ -896,6 +1060,20 @@ export class ProductsComponent implements OnInit, OnDestroy {
       params = params.set('search', searchQuery);
     }
 
+    if (this.currentUser?.role === 'STATE_MANAGER') {
+      params = params.set('state', this.currentUser.stateAbbr);
+    } else if (this.currentUser?.role === 'STORE_MANAGER') {
+      params = params.set('storeId', this.currentUser.storeId);
+    }
+
+    if (this.selectedStores.length > 0) {
+      params = params.set('storeIds', this.selectedStores.join(','));
+    }
+
+    if (this.selectedStates.length > 0) {
+      params = params.set('states', this.selectedStates.join(','));
+    }
+
     this.http.get('/api/v2/products/export', {
       headers: this.getAuthHeaders(),
       params,
@@ -925,6 +1103,20 @@ export class ProductsComponent implements OnInit, OnDestroy {
     if (this.selectedMonth) params = params.set('month', this.selectedMonth.toString());
     if (this.selectedCategory) params = params.set('category', this.selectedCategory);
     if (this.searchTerm) params = params.set('search', this.searchTerm);
+
+    if (this.currentUser?.role === 'STATE_MANAGER') {
+      params = params.set('state', this.currentUser.stateAbbr);
+    } else if (this.currentUser?.role === 'STORE_MANAGER') {
+      params = params.set('storeId', this.currentUser.storeId);
+    }
+
+    if (this.selectedStores.length > 0) {
+      params = params.set('storeIds', this.selectedStores.join(','));
+    }
+
+    if (this.selectedStates.length > 0) {
+      params = params.set('states', this.selectedStates.join(','));
+    }
 
     this.http.get('/api/v2/products/performance/export', {
       headers: this.getAuthHeaders(),
@@ -959,6 +1151,22 @@ export class ProductsComponent implements OnInit, OnDestroy {
       }
     }
     if (this.selectedCategory) parts.push(this.selectedCategory);
+    if (this.selectedStores.length > 0) {
+      if (this.selectedStores.length === 1) {
+        const store = this.availableStores.find(s => s.storeid === this.selectedStores[0]);
+        parts.push(store ? `${store.city}, ${store.state}`: '1 store');
+      } else {
+        parts.push(`${this.selectedStores.length} stores`);
+      }
+    }
+    if (this.selectedStates.length > 0) {
+      if (this.selectedStates.length === 1) {
+        const state = this.availableStates.find(s => s.state_code === this.selectedStates[0]);
+        parts.push(state ? `${state.state}`: '1 state');
+      } else {
+        parts.push(`${this.selectedStates.length} states`);
+      }
+    }
 
     return parts.length > 0 ? parts.join(' • ') : 'All Time';
   }
