@@ -60,10 +60,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT = stateless
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/**").permitAll() // TEMP: Allow all API endpoints for testing
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers("/", "/index.html", "/login", "/login.html", "/**/*.js", "/**/*.css", "/**/*.html", "/assets/**", "/css/**", "/images/**").permitAll() // Allow frontend static files
-                        .anyRequest().authenticated())
+                        .requestMatchers("/api/login", "/api/register").permitAll() // Explicitly permit login/register
+                        .requestMatchers("/api/**").authenticated() // Secure all other API endpoints
+                        .anyRequest().permitAll()) // Permit all other requests (for frontend assets)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .logout(logout -> logout.logoutUrl("/logout"));
