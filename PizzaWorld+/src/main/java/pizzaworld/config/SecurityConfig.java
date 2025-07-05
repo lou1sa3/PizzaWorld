@@ -58,7 +58,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/**").permitAll() // TEMP: Allow all API endpoints for testing
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/", "/index.html", "/login", "/login.html", "/*.js", "/*.css", "/*.html", "/assets/**").permitAll() // Allow frontend static files
+                        .requestMatchers("/", "/index.html", "/login", "/login.html", "/**/*.js", "/**/*.css", "/**/*.html", "/assets/**", "/css/**", "/images/**").permitAll() // Allow frontend static files
                         .anyRequest().authenticated())
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
