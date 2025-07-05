@@ -79,11 +79,6 @@ cd PizzaWorld+
 cd PizzaWorld+/frontend
 npm install
 
-# Set environment variables manually (example for Linux/Mac)
-export DB_URL="jdbc:postgresql://aws-0-eu-central-1.pooler.supabase.com:6543/postgres?prepareThreshold=0"
-export DB_USERNAME="postgres.xmjywzcuaajlmghgpcev"
-export DB_PASSWORD="PizzaWorld.2025"
-export JWT_SECRET="supergeheimerSchluessel123456789012345"
 
 # Start services
 # Terminal 1: Backend
@@ -94,15 +89,7 @@ cd frontend
 npm start
 ```
 
-## ▲ Login Credentials
 
-The application includes pre-configured demo users:
-
-| Username | Password | Role | Description |
-|----------|----------|------|-------------|
-| `admin` | `admin123` | `HQ_ADMIN` | Full access to all features and data |
-| `state` | `state123` | `STATE_MANAGER` | State-level access (California) |
-| `store` | `store123` | `STORE_MANAGER` | Store-level access (Store #1) |
 
 ## ◆ Project Structure
 

@@ -8,6 +8,7 @@ export DB_URL="jdbc:postgresql://aws-0-eu-central-1.pooler.supabase.com:6543/pos
 export DB_USERNAME="postgres.xmjywzcuaajlmghgpcev"
 export DB_PASSWORD="PizzaWorld.2025"
 export JWT_SECRET="supergeheimerSchluessel123456789012345"
+export GMAIL_APP_PASSWORD="obcs zapk yyqb wedb"
 
 echo ""
 echo "   *     *     *     *     *     *     *   "

@@ -27,39 +27,39 @@ public class SupportController {
     @PostMapping("/send-support-email")
     public ResponseEntity<?> sendSupportEmail(@RequestBody EmailRequest emailRequest) {
         try {
-            // Log the support request
-            logger.info("Support email request received:");
-            logger.info("From: " + emailRequest.senderName + " <" + emailRequest.from + ">");
-            logger.info("Subject: " + emailRequest.subject);
+            // Log the support request immediately
+            logger.info("Support request from: " + emailRequest.senderName + " - " + emailRequest.subject);
             
-            // Try to send actual email
-            boolean emailSent = emailService.sendEmail(
-                emailRequest.to,
-                emailRequest.from,
-                emailRequest.subject,
-                emailRequest.message
-            );
+            // Return immediate success response - don't wait for email processing
+            ResponseEntity<?> response = ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Your message has been sent successfully! We'll get back to you soon."
+            ));
             
-            if (emailSent) {
-                return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "Your email has been sent successfully to our support team."
-                ));
-            } else {
-                // Email not sent (likely not configured), but still log it
-                logger.warning("Email service not configured. Request logged for manual processing.");
-                return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "Your request has been logged. Our team will contact you soon at " + emailRequest.from
-                ));
-            }
+            // Process email in background thread (fire-and-forget)
+            new Thread(() -> {
+                try {
+                    emailService.sendSupportEmail(
+                        emailRequest.from,
+                        emailRequest.senderName,
+                        emailRequest.subject,
+                        emailRequest.message
+                    );
+                    logger.info("Background email sent for: " + emailRequest.senderName);
+                } catch (Exception emailEx) {
+                    logger.warning("Background email failed: " + emailEx.getMessage());
+                }
+            }).start();
+            
+            return response;
             
         } catch (Exception e) {
-            logger.severe("Failed to process support email: " + e.getMessage());
+            logger.severe("Failed to process support request: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of(
                 "success", false,
-                "error", "Failed to send support email"
+                "error", "Failed to process request. Please try again."
             ));
         }
     }
+
 } 

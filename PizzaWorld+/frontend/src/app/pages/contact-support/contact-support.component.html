@@ -120,9 +120,13 @@
           [disabled]="contactForm.invalid || sending"
           [class.loading]="sending"
         >
-          <span *ngIf="!sending">Send Email</span>
-          <span *ngIf="sending" class="loading-spinner">
-            <i class="bx bx-loader-alt bx-spin"></i>
+          <span *ngIf="!sending">
+            <i class="bx bx-send"></i>
+            Send Email
+          </span>
+          <span *ngIf="sending" class="loading-content">
+            <div class="spinner"></div>
+            Sending...
           </span>
         </button>
       </div>

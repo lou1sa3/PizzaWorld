@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { timeout } from 'rxjs/operators';
 
 @Component({
   selector: 'app-contact-support',
@@ -45,42 +46,43 @@ export class ContactSupportComponent implements OnInit {
     this.errorMessage = '';
 
     const emailData = {
-      to: 'pizzaworldplus@proton.me',
+      to: 'pizzaworldplus@gmail.com',
       from: this.contactForm.value.email,
       senderName: this.contactForm.value.name,
-      subject: `Support Request: ${this.contactForm.value.subject}`,
-      message: `
-        Name: ${this.contactForm.value.name}
-        Email: ${this.contactForm.value.email}
-        Subject: ${this.contactForm.value.subject}
-
-        Message:
-        ${this.contactForm.value.message}
-      `
+      subject: this.contactForm.value.subject,
+      message: this.contactForm.value.message
     };
 
-    // Send email through backend API
-    this.http.post('/api/send-support-email', emailData).subscribe({
-      next: () => {
-        this.sending = false;
-        this.successMessage = 'Your message has been sent successfully! Our support team will get back to you soon.';
-        this.contactForm.reset();
+    // Send email through backend API with short timeout
+    this.http.post('/api/send-support-email', emailData)
+      .pipe(timeout(2000)) // 2 second timeout - backend should respond immediately
+      .subscribe({
+        next: (response: any) => {
+          this.sending = false;
+          this.successMessage = response.message || 'Your message has been sent successfully! Our support team will get back to you soon.';
+          this.contactForm.reset();
 
-        // Clear success message after 5 seconds
-        setTimeout(() => {
-          this.successMessage = '';
-        }, 5000);
-      },
-      error: (error) => {
-        this.sending = false;
-        this.errorMessage = 'Failed to send email. Please try again later or contact support directly at pizzaworldplus@proton.me';
-        console.error('Email send error:', error);
+          // Clear success message after 3 seconds
+          setTimeout(() => {
+            this.successMessage = '';
+          }, 3000);
+        },
+        error: (error) => {
+          this.sending = false;
+          if (error.name === 'TimeoutError') {
+            this.errorMessage = 'Server response too slow. Your message may have been sent. Please wait before trying again.';
+          } else if (error.status === 0) {
+            this.errorMessage = 'Connection error. Please check your internet connection.';
+          } else {
+            this.errorMessage = 'Failed to send message. Please try again or contact support directly at pizzaworldplus@gmail.com';
+          }
+          console.error('Email send error:', error);
 
-        // Clear error message after 5 seconds
-        setTimeout(() => {
-          this.errorMessage = '';
-        }, 5000);
-      }
-    });
+          // Clear error message after 3 seconds
+          setTimeout(() => {
+            this.errorMessage = '';
+          }, 3000);
+        }
+      });
   }
 }

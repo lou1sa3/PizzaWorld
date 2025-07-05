@@ -7,6 +7,7 @@ set DB_URL=jdbc:postgresql://aws-0-eu-central-1.pooler.supabase.com:6543/postgre
 set DB_USERNAME=postgres.xmjywzcuaajlmghgpcev
 set DB_PASSWORD=PizzaWorld.2025
 set JWT_SECRET=supergeheimerSchluessel123456789012345
+set GMAIL_APP_PASSWORD=obcs zapk yyqb wedb
 
 echo.
 echo    *     *     *     *     *     *     *   
