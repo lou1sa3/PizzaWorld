@@ -6,6 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
 import { KpiService, OrdersKPIs } from '../../core/kpi.service';
 import { SearchService, SearchResult } from '../../core/search.service';
+import { ThemeService, Theme } from '../../core/theme.service';
+import { NotificationService } from '../../core/notification.service';
 import { Subject, takeUntil, debounceTime } from 'rxjs';
 
 @Component({
@@ -20,12 +22,22 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private kpiService = inject(KpiService);
   private searchService = inject(SearchService);
+  private themeService = inject(ThemeService);
+  private notificationService = inject(NotificationService);
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
 
   user$: typeof this.auth.currentUser$;
 
   @ViewChild('sidebar', { static: true }) sidebar!: ElementRef<HTMLElement>;
+
+  // Mobile sidebar state
+  isMobile = false;
+  isOpen = false;
+
+  // Theme state
+  currentTheme: Theme = 'light';
+  isDarkMode = false;
 
   // Quick Stats data
   quickStats: OrdersKPIs = {
@@ -51,6 +63,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadQuickStats();
     this.setupSearchSubscription();
+    this.setupThemeSubscription();
+    this.checkMobileView();
   }
 
   ngOnDestroy(): void {
@@ -107,7 +121,80 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   toggleSidebar(): void {
-    this.sidebar.nativeElement.classList.toggle('collapsed');
+    if (this.isMobile) {
+      this.isOpen = !this.isOpen;
+      this.updateMobileSidebar();
+    } else {
+      this.sidebar.nativeElement.classList.toggle('collapsed');
+    }
+  }
+
+  private setupThemeSubscription(): void {
+    this.themeService.currentTheme$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(theme => {
+        this.currentTheme = theme;
+      });
+
+    this.themeService.isDarkMode$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(isDark => {
+        this.isDarkMode = isDark;
+      });
+  }
+
+  private checkMobileView(): void {
+    this.isMobile = window.innerWidth < 1024;
+    if (this.isMobile) {
+      this.isOpen = false;
+      this.updateMobileSidebar();
+    }
+  }
+
+  private updateMobileSidebar(): void {
+    const sidebar = this.sidebar.nativeElement;
+    const overlay = document.getElementById('sidebar-overlay');
+
+    if (this.isOpen) {
+      sidebar.classList.add('mobile-open');
+      if (overlay) {
+        overlay.classList.add('mobile-overlay-active');
+      }
+    } else {
+      sidebar.classList.remove('mobile-open');
+      if (overlay) {
+        overlay.classList.remove('mobile-overlay-active');
+      }
+    }
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+
+    // Show notification about theme change
+    setTimeout(() => {
+      const isDark = this.themeService.isDarkMode();
+      if (isDark) {
+        this.notificationService.success(
+          'Dark Mode Enabled',
+          'Switched to dark theme with orange gradients and enhanced styling!',
+          { duration: 3000 }
+        );
+      } else {
+        this.notificationService.info(
+          'Light Mode Enabled',
+          'Switched back to light theme.',
+          { duration: 3000 }
+        );
+      }
+    }, 100);
+  }
+
+  closeMobileSidebar(): void {
+    if (this.isMobile && this.isOpen) {
+      this.isOpen = false;
+      this.updateMobileSidebar();
+    }
   }
 
   logout(): void {
@@ -188,7 +275,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.selectedIndex = -1;
   }
 
-  // Global keyboard shortcut
+  // Global keyboard shortcut and window resize
   @HostListener('document:keydown', ['$event'])
   handleKeyboardShortcut(event: KeyboardEvent): void {
     // Ctrl+K or Cmd+K to focus search
@@ -200,5 +287,15 @@ export class SidebarComponent implements OnInit, OnDestroy {
         this.showSearchResults = true;
       }
     }
+
+    // Escape to close mobile sidebar
+    if (event.key === 'Escape' && this.isMobile && this.isOpen) {
+      this.closeMobileSidebar();
+    }
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onWindowResize(): void {
+    this.checkMobileView();
   }
 }

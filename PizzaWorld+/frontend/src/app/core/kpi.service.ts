@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams }         from '@angular/common/http';
 import { Observable, shareReplay, map, catchError, of }         from 'rxjs';
+import { CacheService } from './cache.service';
 // Removed unused import
 
 /** Product information interface */
@@ -310,6 +311,7 @@ export interface PeriodComparison {
 @Injectable({ providedIn: 'root' })
 export class KpiService {
   private http = inject(HttpClient);
+  private cacheService = inject(CacheService);
 
   // Cache for dashboard KPIs - cache for 5 minutes
   private dashboardCache$: Observable<DashboardKpiDto> | null = null;
@@ -327,15 +329,17 @@ export class KpiService {
 
   private recentOrdersCache: OrderInfo[] | null = null;
 
-  /** Holt alle KPI‐Zahlen für das Dashboard - v2 optimized */
+  /** Holt alle KPI‐Zahlen für das Dashboard - v2 optimized with cache service */
   getDashboard(): Observable<DashboardKpiDto> {
-    if (!this.dashboardCache$) {
-      const token = localStorage.getItem('authToken');
-      const headers = token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : undefined;
-      this.dashboardCache$ = this.http.get<DashboardKpiDto>('/api/v2/dashboard/kpis', { headers })
-        .pipe(shareReplay(1, 300000)); // Cache for 5 minutes
-    }
-    return this.dashboardCache$;
+    return this.cacheService.get(
+      'dashboard_kpis',
+      () => {
+        const token = localStorage.getItem('authToken');
+        const headers = token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : undefined;
+        return this.http.get<DashboardKpiDto>('/api/v2/dashboard/kpis', { headers });
+      },
+      300000 // 5 minutes cache
+    );
   }
 
   /** Clear cache when needed (e.g., after updates) */

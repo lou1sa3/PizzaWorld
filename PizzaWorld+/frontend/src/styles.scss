@@ -19,7 +19,7 @@ body {
   /* Modern Sidebar Dimensions */
   --sidebar-w: 280px;
   --sidebar-w-collapsed: 80px;
-  
+
   /* Orange Theme Colors */
   --orange-50: #fff7ed;
   --orange-100: #ffedd5;
@@ -31,7 +31,7 @@ body {
   --orange-700: #c2410c;
   --orange-800: #9a3412;
   --orange-900: #7c2d12;
-  
+
   /* Neutral Colors */
   --slate-50: #f8fafc;
   --slate-100: #f1f5f9;
@@ -43,17 +43,256 @@ body {
   --slate-700: #334155;
   --slate-800: #1e293b;
   --slate-900: #0f172a;
-  
+
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%);
   --gradient-secondary: linear-gradient(135deg, var(--orange-400) 0%, var(--orange-500) 100%);
   --gradient-bg: linear-gradient(135deg, var(--slate-50) 0%, var(--slate-100) 100%);
-  
+
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Dark Mode Theme Variables */
+  --primary-color: #ff6b35;
+  --accent-color: #f7931e;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --border-color: #e2e8f0;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --card-bg: #ffffff;
+  --sidebar-bg: linear-gradient(135deg, #ff6b35, #f7931e);
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --hover-bg: #f8fafc;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --info-color: #3b82f6;
+}
+
+/* TailwindCSS Dark Mode with Orange Accents */
+.dark {
+  /* Deep dark backgrounds with orange accents */
+  --bg-primary: theme('colors.slate.950');
+  --bg-secondary: theme('colors.slate.900');
+  --bg-tertiary: theme('colors.slate.800');
+  --text-primary: theme('colors.slate.50');
+  --text-secondary: theme('colors.slate.300');
+  --text-tertiary: theme('colors.slate.400');
+  --border-color: theme('colors.slate.700');
+  --shadow-color: rgba(0, 0, 0, 0.6);
+  --card-bg: theme('colors.slate.900');
+  --sidebar-bg: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%);
+  --input-bg: theme('colors.slate.800');
+  --input-border: theme('colors.slate.600');
+  --hover-bg: theme('colors.slate.700');
+  --success-color: theme('colors.emerald.500');
+  --warning-color: theme('colors.orange.500');
+  --error-color: theme('colors.red.500');
+  --info-color: theme('colors.orange.600');
+  --gradient-bg: linear-gradient(135deg, theme('colors.slate.950') 0%, theme('colors.slate.900') 100%);
+
+  /* Orange accent gradients for dark mode */
+  --gradient-primary: linear-gradient(135deg, theme('colors.orange.600') 0%, theme('colors.orange.500') 50%, theme('colors.orange.400') 100%);
+  --gradient-secondary: linear-gradient(135deg, theme('colors.orange.800') 0%, theme('colors.orange.600') 100%);
+  --gradient-accent: linear-gradient(135deg, theme('colors.orange.950') 0%, theme('colors.orange.900') 100%);
+  --gradient-sidebar: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%);
+}
+
+/* Global dark mode styles */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode utility classes */
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.bg-tertiary { background-color: var(--bg-tertiary); }
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.border-default { border-color: var(--border-color); }
+.card-bg { background-color: var(--card-bg); }
+
+/* Dark mode transitions for all elements */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* TailwindCSS Dark Mode Component Overrides with Orange Accents */
+
+/* Global dark mode styles using Tailwind approach */
+@layer base {
+  .dark {
+    /* Background colors */
+    --tw-bg-opacity: 1;
+    background-color: rgb(2 6 23 / var(--tw-bg-opacity)); /* slate-950 */
+  }
+
+  .dark .bg-white {
+    --tw-bg-opacity: 1;
+    background-color: rgb(15 23 42 / var(--tw-bg-opacity)); /* slate-900 */
+  }
+
+  .dark .bg-gray-50,
+  .dark .bg-slate-50 {
+    --tw-bg-opacity: 1;
+    background-color: rgb(30 41 59 / var(--tw-bg-opacity)); /* slate-800 */
+  }
+
+  .dark .bg-gray-100,
+  .dark .bg-slate-100 {
+    --tw-bg-opacity: 1;
+    background-color: rgb(51 65 85 / var(--tw-bg-opacity)); /* slate-700 */
+  }
+
+  /* Text colors */
+  .dark .text-gray-900,
+  .dark .text-slate-900 {
+    --tw-text-opacity: 1;
+    color: rgb(248 250 252 / var(--tw-text-opacity)); /* slate-50 */
+  }
+
+  .dark .text-gray-700,
+  .dark .text-slate-700 {
+    --tw-text-opacity: 1;
+    color: rgb(203 213 225 / var(--tw-text-opacity)); /* slate-300 */
+  }
+
+  .dark .text-gray-500,
+  .dark .text-slate-500 {
+    --tw-text-opacity: 1;
+    color: rgb(148 163 184 / var(--tw-text-opacity)); /* slate-400 */
+  }
+
+  /* Border colors */
+  .dark .border-gray-200,
+  .dark .border-slate-200 {
+    --tw-border-opacity: 1;
+    border-color: rgb(51 65 85 / var(--tw-border-opacity)); /* slate-700 */
+  }
+
+    .dark .border-orange-100 {
+    --tw-border-opacity: 1;
+    border-color: rgb(111 4 102);
+  }
+
+    /* Orange accents for dark mode */
+  .dark .text-orange-500 {
+    --tw-text-opacity: 1;
+    color: rgb(251 146 60 / var(--tw-text-opacity)); /* orange-400 */
+  }
+
+  .dark .bg-orange-50 {
+    background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%);
+  }
+
+  .dark .bg-orange-100 {
+    background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%);
+  }
+
+  /* Orange tiles and KPI components */
+  .dark .bg-orange-500 {
+    background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%);
+  }
+
+  .dark .bg-orange-600 {
+    background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%);
+  }
+
+  /* Hover states for dark mode */
+  .dark .hover\\:bg-gray-50:hover,
+  .dark .hover\\:bg-slate-50:hover {
+    --tw-bg-opacity: 1;
+    background-color: rgb(51 65 85 / var(--tw-bg-opacity)); /* slate-700 */
+  }
+
+  .dark .hover\\:bg-orange-50:hover {
+    --tw-bg-opacity: 1;
+    background-color: rgb(124 45 18 / var(--tw-bg-opacity)); /* orange-900 */
+  }
+}
+
+/* Enhanced component styling for dark mode */
+.dark {
+  /* Card styling with custom gradient */
+  .modern-card {
+    background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%);
+    @apply border-slate-700 shadow-dark-lg;
+  }
+
+  .modern-card:hover {
+    @apply shadow-dark-xl;
+    transform: translateY(-2px);
+  }
+
+  /* KPI Tiles with gradient */
+  .kpi-tile,
+  .kpi-card,
+  .stat-card {
+    background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%) !important;
+    @apply border-slate-700 shadow-dark-lg;
+  }
+
+  /* Orange themed components */
+  .bg-gradient-to-r.from-orange-400.to-orange-600,
+  .bg-gradient-to-br.from-orange-400.to-orange-600,
+  .bg-gradient-to-r.from-orange-500.to-orange-600,
+  .bg-gradient-to-r.from-orange-400.to-orange-500,
+  .bg-gradient-to-r.from-orange-300.to-orange-400,
+  .bg-gradient-to-r.from-orange-600.to-orange-700 {
+    background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%) !important;
+  }
+
+  /* Page backgrounds with custom gradient */
+  .bg-gradient-to-br.from-orange-50.via-white.to-orange-100 {
+    background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%) !important;
+  }
+
+  /* Header sections */
+  .bg-gradient-to-r.from-orange-25.to-orange-50 {
+    background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%) !important;
+  }
+
+  /* Button styling with orange gradients */
+  .btn-primary {
+    background: linear-gradient(135deg, theme('colors.orange.600'), theme('colors.orange.500'));
+    @apply border-orange-600 text-white;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, theme('colors.orange.700'), theme('colors.orange.600'));
+    @apply shadow-dark-lg;
+    transform: translateY(-1px);
+  }
+
+  /* Chart container with dark styling */
+  .chart-container {
+    @apply bg-slate-900 border-slate-700 shadow-dark-lg;
+  }
+
+  /* Input styling */
+  input, textarea, select {
+    @apply bg-slate-800 border-slate-600 text-slate-50;
+  }
+
+  input::placeholder, textarea::placeholder {
+    @apply text-slate-400;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: rgb(118 50 159);
+    box-shadow: 0 0 0 3px rgba(118, 50, 159, 0.2);
+  }
 }
 
 /* Modern Layout System */
@@ -67,6 +306,37 @@ body {
 
 .sidebar.collapsed ~ .home-section {
   margin-left: var(--sidebar-w-collapsed);
+}
+
+/* TailwindCSS Dark Mode Layout Enhancements */
+.dark .home-section {
+  background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%);
+}
+
+.dark .content-container {
+  background: transparent;
+}
+
+/* Dark mode background gradient for main content areas */
+.dark body {
+  background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%);
+}
+
+/* Mobile Sidebar Toggle Button */
+.mobile-sidebar-toggle {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Dark mode mobile toggle button */
+.dark .mobile-sidebar-toggle {
+  background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .mobile-sidebar-toggle:hover {
+  background: linear-gradient(135deg, #4a1f3f 0%, #05081f 50%, #1a1f2e 100%) !important;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Modern Content Container */
@@ -181,7 +451,7 @@ body {
     margin-left: 0;
     padding: 1rem;
   }
-  
+
   .content-container {
     padding: 1rem;
   }
@@ -191,7 +461,7 @@ body {
   :root {
     --sidebar-w: 100vw;
   }
-  
+
   .content-container {
     padding: 0.75rem;
   }
@@ -245,6 +515,32 @@ body {
   box-shadow: var(--shadow-md) !important;
 }
 
+/* TailwindCSS Dark Mode PrimeNG Overrides */
+.dark {
+  .p-datatable .p-datatable-thead > tr > th {
+    @apply bg-slate-800 text-slate-50;
+    border-bottom: 2px solid theme('colors.orange.600') !important;
+  }
+
+  .p-datatable .p-datatable-tbody > tr:hover {
+    @apply bg-orange-950/50;
+  }
+
+  .p-datatable .p-datatable-tbody > tr {
+    @apply bg-slate-900 text-slate-50;
+  }
+
+  .p-button {
+    background: linear-gradient(135deg, theme('colors.orange.600'), theme('colors.orange.500')) !important;
+    @apply text-white;
+  }
+
+  .p-button:hover {
+    background: linear-gradient(135deg, theme('colors.orange.700'), theme('colors.orange.600')) !important;
+    @apply shadow-dark-lg;
+  }
+}
+
 /* Chart Container Styling */
 .chart-container {
   background: white;
@@ -287,4 +583,117 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, var(--orange-600) 0%, var(--orange-700) 100%);
+}
+
+/* TailwindCSS Dark Mode Scrollbar */
+.dark ::-webkit-scrollbar-track {
+  @apply bg-slate-800;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgb(118 50 159), rgb(111 4 102));
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgb(130 60 170), rgb(118 50 159));
+}
+
+/* TailwindCSS Dark Mode Comprehensive Styling */
+.dark {
+  /* Form elements */
+  select {
+    @apply bg-slate-800 border-slate-600 text-slate-50;
+  }
+
+  option {
+    @apply bg-slate-800 text-slate-50;
+  }
+
+  /* Tables */
+  table {
+    @apply bg-slate-900 text-slate-50;
+  }
+
+  th {
+    @apply bg-slate-800 text-slate-50 border-slate-700;
+  }
+
+  td {
+    @apply bg-slate-900 text-slate-300 border-slate-700;
+  }
+
+  tr:hover td {
+    @apply bg-slate-700;
+  }
+
+  /* Modals and overlays */
+  .modal, .overlay, .dropdown {
+    @apply bg-slate-900 border-slate-700 shadow-dark-xl;
+  }
+
+  /* Code blocks */
+  code, pre {
+    @apply bg-slate-800 text-orange-400 border-slate-700;
+  }
+
+  /* Links */
+  a {
+    --tw-text-opacity: 1;
+    color: rgb(255 255 255);
+  }
+
+  a:hover {
+    @apply text-orange-300;
+  }
+
+  /* Badges and pills */
+  .badge, .pill, .tag {
+    @apply bg-orange-900 text-orange-100;
+  }
+
+  /* Progress bars */
+  .progress {
+    @apply bg-slate-800;
+  }
+
+  .progress-bar {
+    background: linear-gradient(135deg, theme('colors.orange.600'), theme('colors.orange.500'));
+  }
+
+  /* Alerts with orange accents */
+  .alert {
+    @apply bg-slate-900 border-slate-700 text-slate-50;
+  }
+
+  .alert-success {
+    @apply bg-emerald-950/50 border-emerald-500 text-emerald-400;
+  }
+
+  .alert-warning {
+    @apply bg-orange-950/50 text-orange-400;
+    border-color: rgb(118 50 159);
+  }
+
+  .alert-danger {
+    @apply bg-red-950/50 border-red-500 text-red-400;
+  }
+}
+
+/* Dark mode border overrides using layer utilities */
+@layer utilities {
+  .dark .border-orange-500 {
+    --tw-border-opacity: 1;
+    border-color: rgb(118 50 159);
+  }
+
+  /* Dark mode gradient overrides for profile */
+  .dark .to-orange-100 {
+    --tw-gradient-to: #0e0416 var(--tw-gradient-to-position);
+  }
+
+  .dark .from-orange-50 {
+    --tw-gradient-from: #1a0031 var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(44 11 81 / 0%) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
 }

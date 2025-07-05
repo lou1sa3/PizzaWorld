@@ -3,12 +3,12 @@
 /* Active navigation link styling */
 .active-nav-link {
   @apply bg-white/20 text-white shadow-lg;
-  
+
   /* Active indicator dot */
   .ml-auto {
     @apply opacity-100 bg-white;
   }
-  
+
   /* Glow effect for active link */
   box-shadow: 0 4px 14px 0 rgba(255, 255, 255, 0.1);
 }
@@ -17,7 +17,7 @@
 .nav-link {
   position: relative;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -28,7 +28,7 @@
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
     transition: left 0.5s;
   }
-  
+
   &:hover::before {
     left: 100%;
   }
@@ -44,18 +44,145 @@
   transform: translateX(-100%);
 }
 
+/* Mobile responsiveness */
 @media (max-width: 1024px) {
   .sidebar {
     transform: translateX(-100%);
+    width: 100vw;
+    max-width: 320px;
+    z-index: 50;
   }
-  
-  .sidebar.open {
+
+  .sidebar.mobile-open {
     transform: translateX(0);
   }
-  
-  #sidebar-overlay.active {
+
+  #sidebar-overlay.mobile-overlay-active {
     opacity: 1;
     pointer-events: all;
+  }
+}
+
+/* Dark Mode Sidebar Gradient Class */
+.dark-sidebar-gradient {
+  background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%) !important;
+  box-shadow: 4px 0 25px rgba(0, 0, 0, 0.6) !important;
+  border-right: 1px solid #ea580c !important;
+}
+
+/* TailwindCSS Dark Mode Sidebar Styling */
+.dark {
+  .sidebar {
+    background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%) !important;
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.6) !important;
+    border-right: 1px solid rgb(205 55 213) !important;
+  }
+}
+
+/* Additional fallback for dark mode sidebar */
+[data-theme="dark"] .sidebar {
+  background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%) !important;
+  box-shadow: 4px 0 25px rgba(0, 0, 0, 0.6) !important;
+  border-right: 1px solid rgb(205 55 213) !important;
+  color: white !important;
+}
+
+[data-theme="dark"] .sidebar h1,
+[data-theme="dark"] .sidebar h2,
+[data-theme="dark"] .sidebar h3,
+[data-theme="dark"] .sidebar h4,
+[data-theme="dark"] .sidebar h5,
+[data-theme="dark"] .sidebar h6,
+[data-theme="dark"] .sidebar p,
+[data-theme="dark"] .sidebar span,
+[data-theme="dark"] .sidebar div,
+[data-theme="dark"] .sidebar a,
+[data-theme="dark"] .sidebar button {
+  color: white !important;
+}
+
+[data-theme="dark"] .sidebar svg {
+  color: white !important;
+}
+
+.dark {
+  /* All text in sidebar should be white */
+  .sidebar {
+    color: white !important;
+  }
+
+  .sidebar h1,
+  .sidebar h2,
+  .sidebar h3,
+  .sidebar h4,
+  .sidebar h5,
+  .sidebar h6,
+  .sidebar p,
+  .sidebar span,
+  .sidebar div,
+  .sidebar a,
+  .sidebar button {
+    color: white !important;
+  }
+
+  /* Search input dark mode */
+  .sidebar input {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-color: theme('colors.orange.600') !important;
+    color: white !important;
+  }
+
+  .sidebar input::placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  .sidebar input:focus {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border-color: theme('colors.orange.500') !important;
+    box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.2) !important;
+  }
+
+  /* Navigation links dark mode */
+  .sidebar .nav-link {
+    color: white !important;
+  }
+
+  .sidebar .nav-link:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+  }
+
+  .sidebar .nav-link.active-nav-link {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Quick stats section */
+  .sidebar .text-orange-200,
+  .sidebar .text-orange-100 {
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  /* Icons should be white */
+  .sidebar svg {
+    color: white !important;
+  }
+
+  /* Search results dark mode */
+  .sidebar .bg-white {
+    background: rgba(0, 0, 0, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  .sidebar .search-result-item {
+    color: white !important;
+  }
+
+  .sidebar .search-result-item:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
   }
 }
 
@@ -75,6 +202,20 @@
 
 .sidebar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
+}
+
+/* TailwindCSS Dark Mode Scrollbar */
+.dark .sidebar::-webkit-scrollbar-track {
+  background: rgba(67, 20, 7, 0.3); /* orange-950 with opacity */
+}
+
+.dark .sidebar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgb(118 50 159), rgb(111 4 102));
+  border-radius: 2px;
+}
+
+.dark .sidebar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgb(130 60 170), rgb(118 50 159));
 }
 
 /* Profile avatar animation */
@@ -152,7 +293,7 @@
   .sidebar {
     border-right: 2px solid #ffffff;
   }
-  
+
   .active-nav-link {
     background: rgba(255, 255, 255, 0.3) !important;
     border: 1px solid #ffffff;

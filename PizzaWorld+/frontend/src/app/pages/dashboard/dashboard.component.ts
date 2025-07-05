@@ -5,6 +5,7 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { FormsModule } from '@angular/forms';
 import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { NotificationService } from '../../core/notification.service';
 import {
   ApexAxisChartSeries,
   ApexChart,
@@ -127,11 +128,32 @@ export class DashboardComponent implements OnInit {
   // Analytics Controls
   showAnalytics = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.loadAvailableYears();
     // loadDashboardData() will be called from loadAvailableYears() after years are loaded
+
+    // Demo notification on dashboard load
+    setTimeout(() => {
+      this.notificationService.success(
+        'Enhanced Dashboard Ready',
+        'Welcome to PizzaWorld+ Analytics! Now with advanced caching, dark mode, and real-time notifications.',
+        { duration: 5000 }
+      );
+    }, 1000);
+
+    // Demo additional notifications to showcase dark mode
+    setTimeout(() => {
+      this.notificationService.info(
+        'Dark Mode Available',
+        'Toggle dark mode using the switch next to PizzaWorld+ in the sidebar!',
+        { duration: 4000 }
+      );
+    }, 3000);
   }
 
   private getAuthHeaders(): HttpHeaders {
@@ -1023,10 +1045,17 @@ export class DashboardComponent implements OnInit {
   }
 
   refreshData(): void {
+    this.notificationService.info('Refreshing Data', 'Loading latest dashboard data...');
+
     this.loadDashboardData();
     if (this.showAnalytics) {
       this.loadAnalyticsData();
     }
+
+    // Show success notification after a delay
+    setTimeout(() => {
+      this.notificationService.toast.success('Dashboard data refreshed successfully!');
+    }, 2000);
   }
 
   // =================================================================
