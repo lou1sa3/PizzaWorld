@@ -45,8 +45,8 @@ body {
   --slate-900: #0f172a;
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%);
-  --gradient-secondary: linear-gradient(135deg, var(--orange-400) 0%, var(--orange-500) 100%);
+  --gradient-primary: linear-gradient(135deg, rgb(164 122 229) 0%, rgb(118 50 159) 100%);
+  --gradient-secondary: linear-gradient(135deg, rgb(164 122 229) 0%, rgb(118 50 159) 100%);
   --gradient-bg: linear-gradient(135deg, var(--slate-50) 0%, var(--slate-100) 100%);
 
   /* Shadows */
@@ -186,10 +186,10 @@ body {
     border-color: rgb(111 4 102);
   }
 
-    /* Orange accents for dark mode */
+    /* Purple accents for dark mode */
   .dark .text-orange-500 {
     --tw-text-opacity: 1;
-    color: rgb(251 146 60 / var(--tw-text-opacity)); /* orange-400 */
+    color: rgb(164 122 229); /* purple */
   }
 
   .dark .bg-orange-50 {
@@ -200,7 +200,7 @@ body {
     background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%);
   }
 
-  /* Orange tiles and KPI components */
+    /* Purple tiles and KPI components */
   .dark .bg-orange-500 {
     background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%);
   }
@@ -218,7 +218,7 @@ body {
 
   .dark .hover\\:bg-orange-50:hover {
     --tw-bg-opacity: 1;
-    background-color: rgb(124 45 18 / var(--tw-bg-opacity)); /* orange-900 */
+    background-color: rgb(44 11 81 / var(--tw-bg-opacity)); /* dark purple */
   }
 }
 
@@ -243,7 +243,7 @@ body {
     @apply border-slate-700 shadow-dark-lg;
   }
 
-  /* Orange themed components */
+  /* Purple themed components */
   .bg-gradient-to-r.from-orange-400.to-orange-600,
   .bg-gradient-to-br.from-orange-400.to-orange-600,
   .bg-gradient-to-r.from-orange-500.to-orange-600,
@@ -263,14 +263,15 @@ body {
     background: linear-gradient(135deg, #371a3a 0%, #03061c 50%, #0f172a 100%) !important;
   }
 
-  /* Button styling with orange gradients */
+  /* Button styling with purple gradients */
   .btn-primary {
-    background: linear-gradient(135deg, theme('colors.orange.600'), theme('colors.orange.500'));
-    @apply border-orange-600 text-white;
+    background: linear-gradient(135deg, rgb(118 50 159), rgb(164 122 229));
+    border-color: rgb(0 0 0);
+    @apply text-white;
   }
 
   .btn-primary:hover {
-    background: linear-gradient(135deg, theme('colors.orange.700'), theme('colors.orange.600'));
+    background: linear-gradient(135deg, rgb(111 4 102), rgb(118 50 159));
     @apply shadow-dark-lg;
     transform: translateY(-1px);
   }
@@ -376,7 +377,7 @@ body {
 .btn-primary:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
-  background: linear-gradient(135deg, var(--orange-600) 0%, var(--orange-700) 100%);
+  background: linear-gradient(135deg, rgb(111 4 102) 0%, rgb(118 50 159) 100%);
 }
 
 /* Modern Input Styles */
@@ -391,8 +392,8 @@ body {
 
 .modern-input:focus {
   outline: none;
-  border-color: var(--orange-500);
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+  border-color: rgb(164 122 229);
+  box-shadow: 0 0 0 3px rgba(164, 122, 229, 0.1);
 }
 
 /* Typography */
@@ -494,11 +495,11 @@ body {
   background: var(--slate-50) !important;
   color: var(--slate-700) !important;
   font-weight: 600 !important;
-  border-bottom: 2px solid var(--orange-200) !important;
+  border-bottom: 2px solid rgb(164 122 229) !important;
 }
 
 .p-datatable .p-datatable-tbody > tr:hover {
-  background: var(--orange-50) !important;
+  background: rgba(164, 122, 229, 0.1) !important;
 }
 
 .p-button {
@@ -510,7 +511,7 @@ body {
 }
 
 .p-button:hover {
-  background: linear-gradient(135deg, var(--orange-600) 0%, var(--orange-700) 100%) !important;
+  background: linear-gradient(135deg, rgb(111 4 102) 0%, rgb(118 50 159) 100%) !important;
   transform: translateY(-1px) !important;
   box-shadow: var(--shadow-md) !important;
 }
@@ -519,11 +520,11 @@ body {
 .dark {
   .p-datatable .p-datatable-thead > tr > th {
     @apply bg-slate-800 text-slate-50;
-    border-bottom: 2px solid theme('colors.orange.600') !important;
+    border-bottom: 2px solid rgb(118 50 159) !important;
   }
 
   .p-datatable .p-datatable-tbody > tr:hover {
-    @apply bg-orange-950/50;
+    background: rgba(44, 11, 81, 0.5) !important;
   }
 
   .p-datatable .p-datatable-tbody > tr {
@@ -531,13 +532,161 @@ body {
   }
 
   .p-button {
-    background: linear-gradient(135deg, theme('colors.orange.600'), theme('colors.orange.500')) !important;
+    background: linear-gradient(135deg, rgb(118 50 159), rgb(164 122 229)) !important;
     @apply text-white;
   }
 
   .p-button:hover {
-    background: linear-gradient(135deg, theme('colors.orange.700'), theme('colors.orange.600')) !important;
+    background: linear-gradient(135deg, rgb(111 4 102), rgb(118 50 159)) !important;
     @apply shadow-dark-lg;
+  }
+
+  /* ApexCharts Dark Mode Tooltips */
+  .apexcharts-tooltip {
+    background: rgb(30 41 59) !important; /* slate-800 */
+    border: 1px solid rgb(71 85 105) !important; /* slate-600 */
+    color: rgb(248 250 252) !important; /* slate-50 */
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7) !important;
+  }
+
+  .apexcharts-tooltip-title {
+    background: rgb(118 50 159) !important; /* purple */
+    color: white !important;
+    border-bottom: 1px solid rgb(71 85 105) !important;
+  }
+
+  .apexcharts-tooltip-text,
+  .apexcharts-tooltip-text-y-label,
+  .apexcharts-tooltip-text-y-value,
+  .apexcharts-tooltip-text-z-label,
+  .apexcharts-tooltip-text-z-value {
+    color: rgb(248 250 252) !important; /* slate-50 */
+  }
+
+  .apexcharts-tooltip-series-group {
+    background: transparent !important;
+  }
+
+  .apexcharts-tooltip-marker {
+    border: 2px solid rgba(71, 85, 105, 0.8) !important; /* dark marker border */
+  }
+
+  /* ApexCharts Dark Mode - Dark Elements with 10% Transparency */
+  .apexcharts-line-series path {
+    stroke: rgb(164 122 229) !important; /* Purple line */
+    stroke-width: 3px !important; /* Brighter/thicker line */
+    filter: none !important;
+  }
+
+  .apexcharts-area-series path {
+    fill: transparent !important; /* Remove the area fill */
+    stroke: rgb(164 122 229) !important; /* Purple line */
+    stroke-width: 3px !important; /* Brighter/thicker line */
+    filter: none !important;
+  }
+
+  .apexcharts-bar-series path {
+    fill: rgba(71, 85, 105, 0.1) !important; /* 10% transparency dark background */
+    stroke: rgba(71, 85, 105, 0.6) !important;
+    stroke-width: 1px !important;
+    filter: none !important;
+  }
+
+  .apexcharts-pie-series path {
+    fill: rgba(71, 85, 105, 0.1) !important; /* 10% transparency dark background */
+    stroke: rgba(30, 41, 59, 0.8) !important;
+    stroke-width: 1px !important;
+    filter: none !important;
+  }
+
+  .apexcharts-donut-series path {
+    fill: rgba(71, 85, 105, 0.1) !important; /* 10% transparency dark background */
+    stroke: rgba(30, 41, 59, 0.8) !important;
+    stroke-width: 1px !important;
+    filter: none !important;
+  }
+
+  .apexcharts-radialbar-series path {
+    stroke: rgba(71, 85, 105, 0.8) !important;
+    stroke-width: 6px !important;
+    fill: rgba(71, 85, 105, 0.1) !important; /* 10% transparency dark background */
+    filter: none !important;
+  }
+
+  /* Enhanced chart visual effects - Dark theme */
+  .apexcharts-canvas {
+    filter: brightness(1.0) !important;
+  }
+
+  /* Hover effects for chart elements - Dark theme */
+  .apexcharts-bar-series path:hover,
+  .apexcharts-pie-series path:hover,
+  .apexcharts-donut-series path:hover {
+    fill: rgba(71, 85, 105, 0.2) !important; /* slightly more visible on hover */
+    stroke: rgba(71, 85, 105, 1.0) !important; /* full opacity on hover */
+    transition: all 0.3s ease !important;
+  }
+
+  /* Area chart specific styling - Dark theme */
+  .apexcharts-area-series .apexcharts-area {
+    fill-opacity: 0 !important; /* Remove area fill completely */
+  }
+
+  /* Data point markers - Dark theme */
+  .apexcharts-marker {
+    fill: rgba(71, 85, 105, 0.8) !important; /* dark markers */
+    stroke: rgba(30, 41, 59, 0.9) !important; /* dark stroke */
+    stroke-width: 1px !important;
+    r: 3 !important; /* smaller markers */
+  }
+
+  /* Multiple series colors - Purple theme */
+  .apexcharts-series:nth-child(1) path {
+    stroke: rgb(164 122 229) !important; /* Purple */
+    fill: transparent !important; /* No fill */
+    stroke-width: 3px !important;
+  }
+
+  .apexcharts-series:nth-child(2) path {
+    stroke: rgb(205 55 213) !important; /* Lighter purple */
+    fill: transparent !important; /* No fill */
+    stroke-width: 3px !important;
+  }
+
+  .apexcharts-series:nth-child(3) path {
+    stroke: rgb(147 51 234) !important; /* Violet */
+    fill: transparent !important; /* No fill */
+    stroke-width: 3px !important;
+  }
+
+  .apexcharts-series:nth-child(4) path {
+    stroke: rgb(126 34 206) !important; /* Purple-600 */
+    fill: transparent !important; /* No fill */
+    stroke-width: 3px !important;
+  }
+
+  /* Data labels - Dark theme */
+  .apexcharts-datalabel-label,
+  .apexcharts-datalabel-value {
+    fill: rgba(71, 85, 105, 0.8) !important; /* dark text */
+  }
+
+  /* Grid lines - Subtle dark */
+  .apexcharts-gridlines-horizontal line,
+  .apexcharts-gridlines-vertical line {
+    stroke: rgba(71, 85, 105, 0.2) !important; /* very subtle dark lines */
+    stroke-opacity: 1 !important;
+  }
+
+  /* Axis labels - Dark theme */
+  .apexcharts-xaxis-label,
+  .apexcharts-yaxis-label {
+    fill: rgba(71, 85, 105, 0.7) !important; /* dark labels */
+  }
+
+  /* Legend - Dark theme */
+  .apexcharts-legend-text {
+    color: rgba(71, 85, 105, 0.8) !important; /* dark text */
   }
 }
 
@@ -553,7 +702,7 @@ body {
 /* Loading States */
 .loading-spinner {
   border: 3px solid var(--slate-200);
-  border-top: 3px solid var(--orange-500);
+  border-top: 3px solid rgb(164 122 229);
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -577,7 +726,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%);
   border-radius: 4px;
 }
 
@@ -633,7 +782,8 @@ body {
 
   /* Code blocks */
   code, pre {
-    @apply bg-slate-800 text-orange-400 border-slate-700;
+    @apply bg-slate-800 border-slate-700;
+    color: rgb(164 122 229);
   }
 
   /* Links */
@@ -643,12 +793,13 @@ body {
   }
 
   a:hover {
-    @apply text-orange-300;
+    color: rgb(205 55 213);
   }
 
   /* Badges and pills */
   .badge, .pill, .tag {
-    @apply bg-orange-900 text-orange-100;
+    background: rgba(44, 11, 81, 0.8);
+    color: rgb(164 122 229);
   }
 
   /* Progress bars */
@@ -657,7 +808,7 @@ body {
   }
 
   .progress-bar {
-    background: linear-gradient(135deg, theme('colors.orange.600'), theme('colors.orange.500'));
+    background: linear-gradient(135deg, rgb(118 50 159), rgb(164 122 229));
   }
 
   /* Alerts with orange accents */
@@ -670,7 +821,8 @@ body {
   }
 
   .alert-warning {
-    @apply bg-orange-950/50 text-orange-400;
+    background: rgba(44, 11, 81, 0.5);
+    color: rgb(164 122 229);
     border-color: rgb(118 50 159);
   }
 
@@ -684,6 +836,30 @@ body {
   .dark .border-orange-500 {
     --tw-border-opacity: 1;
     border-color: rgb(118 50 159);
+  }
+
+  .dark .border-orange-600 {
+    --tw-border-opacity: 1;
+    border-color: rgb(0 0 0);
+  }
+
+  .dark .text-orange-200 {
+    --tw-text-opacity: 1;
+    color: rgb(164 122 229);
+  }
+
+  .dark .text-orange-100 {
+    --tw-text-opacity: 1;
+    color: rgb(97 52 115);
+  }
+
+  .dark .text-orange-700 {
+    --tw-text-opacity: 1;
+    color: rgb(89 59 110);
+  }
+
+  .dark .border-orange-400\/30 {
+    border-color: rgb(149 42 159);
   }
 
   /* Dark mode gradient overrides for profile */

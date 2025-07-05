@@ -648,12 +648,12 @@ input:focus {
 }
 
 .max-h-\[32rem\]::-webkit-scrollbar-thumb {
-  background: #ff8c42;
+  background: rgb(164 122 229);
   border-radius: 4px;
 }
 
 .max-h-\[32rem\]::-webkit-scrollbar-thumb:hover {
-  background: #ff6b35;
+  background: rgb(118 50 159);
 }
 
 /* Enhanced loading spinner */
@@ -722,7 +722,7 @@ tbody tr {
 
 tbody tr:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15);
+  box-shadow: 0 4px 12px rgba(164, 122, 229, 0.15);
 }
 
 /* Filter section styling */
@@ -779,7 +779,7 @@ tbody tr:hover {
   width: 3rem;
   height: 3rem;
   border: 3px solid #f3f4f6;
-  border-top: 3px solid #ff6b35;
+  border-top: 3px solid rgb(164 122 229);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -816,7 +816,7 @@ th.cursor-pointer {
 
 th.cursor-pointer:hover {
   background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  color: #ff6b35;
+  color: rgb(164 122 229);
 }
 
 th.cursor-pointer::after {
@@ -826,7 +826,7 @@ th.cursor-pointer::after {
   left: 0;
   width: 0;
   height: 2px;
-  background: #ff6b35;
+  background: rgb(164 122 229);
   transition: width 0.3s ease;
 }
 
@@ -851,7 +851,7 @@ th.cursor-pointer:hover::after {
 
 .category-badge:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.3);
+  box-shadow: 0 4px 12px rgba(164, 122, 229, 0.3);
 }
 
 /* Export button enhancements */
@@ -866,13 +866,13 @@ th.cursor-pointer:hover::after {
 .export-btn:hover {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.2) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.2);
+  box-shadow: 0 8px 25px rgba(164, 122, 229, 0.2);
 }
 
 /* Section dividers */
 .section-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, #ff6b35, transparent);
+  background: linear-gradient(90deg, transparent, rgb(164 122 229), transparent);
   margin: 2rem 0;
 }
 
@@ -883,7 +883,7 @@ h1, h2, h3, h4 {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+  background: linear-gradient(135deg, rgb(164 122 229) 0%, rgb(118 50 159) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

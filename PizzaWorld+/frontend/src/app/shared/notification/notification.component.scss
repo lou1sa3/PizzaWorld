@@ -338,13 +338,13 @@
     }
 
     &.notification-warning {
-      border-left: 4px solid theme('colors.orange.500');
-      background: linear-gradient(135deg, theme('colors.slate.900') 0%, theme('colors.orange.950') 100%);
+          border-left: 4px solid rgb(164 122 229);
+    background: linear-gradient(135deg, theme('colors.slate.900') 0%, rgba(44, 11, 81, 1) 100%);
     }
 
     &.notification-info {
-      border-left: 4px solid theme('colors.orange.600');
-      background: linear-gradient(135deg, theme('colors.slate.900') 0%, theme('colors.orange.950') 100%);
+          border-left: 4px solid rgb(118 50 159);
+    background: linear-gradient(135deg, theme('colors.slate.900') 0%, rgba(44, 11, 81, 1) 100%);
     }
 
     &:hover {
@@ -371,20 +371,21 @@
 
   .notification-action-btn {
     &.btn-primary {
-      background: linear-gradient(135deg, theme('colors.orange.600'), theme('colors.orange.500'));
+      background: linear-gradient(135deg, rgb(118 50 159), rgb(164 122 229));
       @apply border-0 text-white;
 
       &:hover {
-        background: linear-gradient(135deg, theme('colors.orange.700'), theme('colors.orange.600'));
+        background: linear-gradient(135deg, rgb(111 4 102), rgb(118 50 159));
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
       }
     }
 
-    &.btn-secondary {
+        &.btn-secondary {
       @apply bg-slate-800 border-slate-600 text-slate-300;
 
       &:hover {
-        @apply bg-slate-700 text-slate-50 border-orange-600;
+        @apply bg-slate-700 text-slate-50;
+        border-color: rgb(0 0 0);
       }
     }
 

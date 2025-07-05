@@ -128,7 +128,7 @@
   /* Search input dark mode */
   .sidebar input {
     background: rgba(0, 0, 0, 0.2) !important;
-    border-color: theme('colors.orange.600') !important;
+    border-color: rgb(118 50 159) !important;
     color: white !important;
   }
 
@@ -138,8 +138,8 @@
 
   .sidebar input:focus {
     background: rgba(0, 0, 0, 0.3) !important;
-    border-color: theme('colors.orange.500') !important;
-    box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.2) !important;
+    border-color: rgb(164 122 229) !important;
+    box-shadow: 0 0 0 2px rgba(118, 50, 159, 0.2) !important;
   }
 
   /* Navigation links dark mode */
@@ -162,6 +162,24 @@
   .sidebar .text-orange-200,
   .sidebar .text-orange-100 {
     color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  /* Dark mode text color overrides */
+  .sidebar .text-orange-100 {
+    --tw-text-opacity: 1;
+    color: rgb(97 52 115) !important;
+  }
+
+  /* Dark mode form elements */
+  .sidebar input,
+  .sidebar textarea,
+  .sidebar select {
+    --tw-border-opacity: 1;
+    border-color: rgb(71 85 105 / var(--tw-border-opacity, 1)) !important;
+    --tw-bg-opacity: 1;
+    background-color: rgb(21 11 33) !important;
+    --tw-text-opacity: 1;
+    color: rgb(248 250 252 / var(--tw-text-opacity, 1)) !important;
   }
 
   /* Icons should be white */
@@ -206,7 +224,12 @@
 
 /* TailwindCSS Dark Mode Scrollbar */
 .dark .sidebar::-webkit-scrollbar-track {
-  background: rgba(67, 20, 7, 0.3); /* orange-950 with opacity */
+  background: rgba(44, 11, 81, 0.3); /* dark purple with opacity */
+}
+
+/* Dark mode border color override */
+.dark .sidebar .border-orange-400\/30 {
+  border-color: rgb(149 42 159);
 }
 
 .dark .sidebar::-webkit-scrollbar-thumb {
