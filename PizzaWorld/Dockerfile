@@ -24,5 +24,5 @@ RUN ./mvnw clean package -DskipTests
 # Expose port 8080 to the outside world
 EXPOSE 8080
 
-# Run the JAR file with memory optimization for 512MB containers
-CMD ["sh", "-c", "java -Xmx400m -Xms200m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -jar target/*.jar"] 
+# Run the JAR file optimized for 2GB container
+CMD ["sh", "-c", "java -Xmx1400m -Xms512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication -jar target/*.jar"] 
