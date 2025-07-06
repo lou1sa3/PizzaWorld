@@ -19,7 +19,6 @@ public class CorsConfig {
         configuration.setAllowedOriginPatterns(Arrays.asList(
             "http://localhost:*",
             "https://*.onrender.com",
-            "https://dashboard.pizzaworldplus.tech/",
             "https://pizzaworldplus.tech",
             "https://*.pizzaworldplus.tech"
         ));

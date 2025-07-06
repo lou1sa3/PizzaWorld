@@ -26,19 +26,7 @@ export class AIChatbotComponent implements OnInit, OnDestroy, AfterViewChecked {
   // Subscriptions
   private subscriptions: Subscription[] = [];
   
-  // Quick action buttons
-  quickActions = [
-    { text: 'What\'s our revenue performance?', icon: '💰' },
-    { text: 'Which stores are performing best?', icon: '🏪' },
-    { text: 'How are our customers doing?', icon: '👥' },
-    { text: 'Show me product insights', icon: '🍕' },
-    { text: 'I need help with my account', icon: '🔧' }
-  ];
 
-  // Test actions
-  testActions = [
-    { text: 'Check AI Status', action: 'checkStatus', icon: '🔧' }
-  ];
 
   constructor(private aiService: AIService) {}
 
@@ -129,21 +117,7 @@ export class AIChatbotComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
-  sendQuickAction(action: string): void {
-    this.currentMessage = action;
-    this.sendMessage();
-  }
 
-  handleTestAction(action: string): void {
-    switch (action) {
-      case 'testAI':
-        this.testGoogleAI();
-        break;
-      case 'checkStatus':
-        this.checkAIStatus();
-        break;
-    }
-  }
 
   onKeyPress(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -216,65 +190,7 @@ export class AIChatbotComponent implements OnInit, OnDestroy, AfterViewChecked {
     return message.id || index.toString();
   }
 
-  /**
-   * Test Google AI connectivity
-   */
-  testGoogleAI(): void {
-    this.isLoading = true;
-    this.error = null;
 
-    // Check if user is logged in first
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      this.isLoading = false;
-      this.error = 'Please log in first to test AI functionality.';
-      return;
-    }
-
-    this.aiService.testGoogleAI().subscribe({
-      next: (result) => {
-        this.isLoading = false;
-        
-        // Add test result to chat
-        const testMessage: ChatMessage = {
-          message: result.response || 'No response received',
-          messageType: 'assistant',
-          timestamp: new Date().toISOString(),
-          category: 'test'
-        };
-        
-        this.chatHistory = [...this.chatHistory, testMessage];
-        
-        // Show additional info about AI status
-        const statusMessage = result.isAIWorking 
-          ? "✅ Google Gemma AI is working correctly!"
-          : "⚠️ Using fallback responses (Google AI not connected)";
-          
-        const statusChatMessage: ChatMessage = {
-          message: statusMessage,
-          messageType: 'system',
-          timestamp: new Date().toISOString(),
-          category: 'test'
-        };
-        
-        this.chatHistory = [...this.chatHistory, statusChatMessage];
-        // No auto-scrolling - let users control scrolling manually
-      },
-      error: (error) => {
-        this.isLoading = false;
-        console.error('AI Test Error:', error);
-        
-        // Provide more specific error messages
-        if (error.status === 403) {
-          this.error = 'Access denied. Please make sure you are logged in with a valid account.';
-        } else if (error.status === 401) {
-          this.error = 'Authentication failed. Please log out and log back in.';
-        } else {
-          this.error = `Failed to test AI connection: ${error.message || 'Unknown error'}`;
-        }
-      }
-    });
-  }
 
   /**
    * Check AI status

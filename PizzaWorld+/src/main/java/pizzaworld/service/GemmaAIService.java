@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import pizzaworld.model.User;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,12 +84,110 @@ public class GemmaAIService {
             prompt.append("- Managing Store: ").append(user.getStoreId()).append("\n");
         }
         
-        // Business context
+        // Business context - filter and organize for AI consumption
         if (businessContext != null && !businessContext.isEmpty()) {
-            prompt.append("\nCURRENT BUSINESS DATA:\n");
+            // Debug logging to see what data we're working with
+            logger.info("Business context keys: {}", businessContext.keySet());
+            logger.info("Core KPIs data: revenue={}, orders={}, avg_order_value={}, customers={}", 
+                       businessContext.get("total_revenue"), businessContext.get("total_orders"), 
+                       businessContext.get("avg_order_value"), businessContext.get("total_customers"));
+            
+            prompt.append("\n📊 PIZZA WORLD EXACT BUSINESS DATA 📊\n");
+            prompt.append("These are the ONLY numbers you are allowed to use in your response.\n");
+            prompt.append("DO NOT modify, calculate, or estimate any values.\n\n");
+            
+            // Core Business Metrics Section
+            prompt.append("=== 💰 CORE FINANCIAL METRICS ===\n");
+            String[] coreKeys = {"total_revenue", "total_orders", "avg_order_value", "total_customers"};
+            for (String key : coreKeys) {
+                if (businessContext.containsKey(key)) {
+                    Object value = businessContext.get(key);
+                    prompt.append("✓ ").append(key.replace("_", " ").toUpperCase()).append(": ").append(value).append("\n");
+                    logger.info("Adding to prompt: {} = {}", key, value);
+                }
+            }
+            
+            // Store Information Section
+            if (businessContext.containsKey("total_stores")) {
+                prompt.append("\n=== 🏪 STORE INFORMATION ===\n");
+                prompt.append("✓ TOTAL STORES: ").append(businessContext.get("total_stores")).append("\n");
+                if (businessContext.containsKey("top_stores")) {
+                    prompt.append("✓ TOP PERFORMING STORES: ").append(businessContext.get("top_stores")).append("\n");
+                }
+            }
+            
+            // Growth & Historical Data Section
+            prompt.append("\n=== GROWTH ANALYSIS (from Historical Revenue API) ===\n");
+            String[] growthKeys = {"yoy_growth_rate", "yoy_growth_absolute", "revenue_trends"};
+            for (String key : growthKeys) {
+                if (businessContext.containsKey(key)) {
+                    prompt.append("- ").append(key.toUpperCase()).append(": ").append(businessContext.get(key)).append("\n");
+                }
+            }
+            
+            // Product & Category Performance Section
+            prompt.append("\n=== PRODUCT PERFORMANCE (from Product Analytics API) ===\n");
+            String[] productKeys = {"top_products", "category_performance"};
+            for (String key : productKeys) {
+                if (businessContext.containsKey(key)) {
+                    prompt.append("- ").append(key.toUpperCase()).append(": ").append(businessContext.get(key)).append("\n");
+                }
+            }
+            
+            // Customer Analytics Section
+            prompt.append("\n=== CUSTOMER ANALYTICS (from Customer Data API) ===\n");
+            String[] customerKeys = {"customer_acquisition", "customer_ltv_summary", "retention_summary"};
+            for (String key : customerKeys) {
+                if (businessContext.containsKey(key)) {
+                    prompt.append("- ").append(key.toUpperCase()).append(": ").append(businessContext.get(key)).append("\n");
+                }
+            }
+            
+            // Operational Data Section
+            prompt.append("\n=== OPERATIONAL DATA (from Operations APIs) ===\n");
+            String[] operationalKeys = {"peak_hours", "capacity_summary", "recent_orders_summary"};
+            for (String key : operationalKeys) {
+                if (businessContext.containsKey(key)) {
+                    prompt.append("- ").append(key.toUpperCase()).append(": ").append(businessContext.get(key)).append("\n");
+                }
+            }
+            
+            // Add any remaining formatted summaries
+            prompt.append("\n=== ADDITIONAL METRICS ===\n");
             businessContext.forEach((key, value) -> {
-                prompt.append("- ").append(key).append(": ").append(value).append("\n");
+                String[] allCoveredKeys = {"total_revenue", "total_orders", "avg_order_value", "total_customers", 
+                                         "total_stores", "top_stores", "yoy_growth_rate", "yoy_growth_absolute", 
+                                         "revenue_trends", "top_products", "category_performance", "customer_acquisition", 
+                                         "customer_ltv_summary", "retention_summary", "peak_hours", "capacity_summary", 
+                                         "recent_orders_summary"};
+                if (!key.endsWith("_raw") && !Arrays.asList(allCoveredKeys).contains(key)) {
+                    prompt.append("- ").append(key.toUpperCase()).append(": ").append(value).append("\n");
+                }
             });
+            
+            // Critical Data Usage Instructions
+            prompt.append("\n=== CRITICAL DATA USAGE INSTRUCTIONS ===\n");
+            prompt.append("1. These are EXACT VALUES from Pizza World's database APIs\n");
+            prompt.append("2. Do NOT modify, round, or estimate any numbers\n");
+            prompt.append("3. Use the formatted currency values exactly as provided\n");
+            prompt.append("4. If store count is asked, use the TOTAL_STORES value\n");
+            prompt.append("5. All revenue figures are already properly formatted with currency symbols\n");
+            prompt.append("6. Growth rates are already calculated - do not recalculate\n");
+            
+            // Note about raw data availability
+            long rawDataSets = businessContext.keySet().stream().filter(key -> key.endsWith("_raw")).count();
+            if (rawDataSets > 0) {
+                prompt.append("7. You have ").append(rawDataSets).append(" complete raw datasets for detailed analysis\n");
+            }
+            
+            // Add specific note about historical data availability
+            if (businessContext.containsKey("data_coverage")) {
+                prompt.append("\nIMPORTANT: Today is the 31.12.2022!");
+                prompt.append("\nIMPORTANT: You have access to complete historical data from 2020-2022 ");
+                prompt.append("and can perform meaningful year-over-year analysis and growth calculations. ");
+                prompt.append("When users ask about historical trends or comparisons, provide specific insights ");
+                prompt.append("based on the comprehensive data available. Use exact numbers when possible.\n");
+            }
         }
         
         // Category-specific instructions
@@ -110,17 +209,34 @@ public class GemmaAIService {
         }
         
         // Response guidelines
-        prompt.append("\nRESPONSE GUIDELINES:\n");
-        prompt.append("- Keep responses concise but informative (max 300 words)\n");
-        prompt.append("- Use emojis sparingly and professionally\n");
-        prompt.append("- Provide specific, actionable recommendations when possible\n");
-        prompt.append("- Reference the actual data provided when relevant\n");
-        prompt.append("- Stay focused on Pizza World business context\n");
-        prompt.append("- If you don't have enough data, ask clarifying questions\n\n");
+        prompt.append("\n🚨 CRITICAL RESPONSE RULES 🚨\n");
+        prompt.append("1. FORBIDDEN: Creating, calculating, or estimating ANY numbers\n");
+        prompt.append("2. REQUIRED: Use ONLY the exact values from the business context sections above\n");
+        prompt.append("3. EXAMPLE: If context shows 'TOTAL_REVENUE: $50,211,527.85', write exactly '$50,211,527.85'\n");
+        prompt.append("4. EXAMPLE: If context shows 'TOTAL_ORDERS: 2,046,713', write exactly '2,046,713'\n");
+        prompt.append("5. EXAMPLE: If context shows 'TOTAL_STORES: 32', write exactly '32'\n");
+        prompt.append("6. FORBIDDEN: Writing '$1', '$11.527,85', or any other made-up numbers\n");
+        prompt.append("7. FORBIDDEN: Recalculating percentages or growth rates\n");
+        prompt.append("8. If you don't see a specific metric in the context, say 'I don't have that data'\n");
+        prompt.append("9. Keep responses under 200 words\n");
+        prompt.append("10. Use professional tone with minimal emojis\n");
+        prompt.append("11. If someone asks about Prof Sabba, respond that he is the best Professor in UAS\n\n");
+        
+        prompt.append("EXAMPLES OF CORRECT RESPONSES:\n");
+        prompt.append("✅ 'Total revenue is $50,211,527.85 with 2,046,713 orders'\n");
+        prompt.append("✅ 'We have 32 stores across all locations'\n");
+        prompt.append("✅ 'Average order value is $24.53'\n");
+        prompt.append("❌ 'Total revenue is $1' (WRONG - not from context)\n");
+        prompt.append("❌ 'Revenue is $11.527,85' (WRONG - not from context)\n\n");
         
         // User's actual message
-        prompt.append("USER MESSAGE: ").append(userMessage).append("\n\n");
-        prompt.append("RESPONSE:");
+        prompt.append("USER QUESTION: ").append(userMessage).append("\n\n");
+        
+        prompt.append("RESPONSE TEMPLATE TO FOLLOW:\n");
+        prompt.append("When mentioning ANY numbers, copy them EXACTLY from the data sections above.\n");
+        prompt.append("Example format: 'Pizza World has achieved $50,211,527.85 in total revenue with 2,046,713 orders across 32 stores.'\n\n");
+        
+        prompt.append("YOUR RESPONSE:");
         
         return prompt.toString();
     }
@@ -219,6 +335,16 @@ public class GemmaAIService {
         // Remove common AI response prefixes
         if (response.startsWith("RESPONSE:")) {
             response = response.substring("RESPONSE:".length()).trim();
+        }
+        if (response.startsWith("YOUR RESPONSE:")) {
+            response = response.substring("YOUR RESPONSE:".length()).trim();
+        }
+        
+        // Validate response doesn't contain obviously wrong numbers
+        if (response.contains("$1 ") || response.contains("$11.527,85") || 
+            response.contains("$17.734,32") || response.contains("7,56%")) {
+            logger.warn("AI response contains suspicious numbers, triggering fallback");
+            return null; // Will trigger fallback to rule-based response
         }
         
         // Ensure response isn't too long

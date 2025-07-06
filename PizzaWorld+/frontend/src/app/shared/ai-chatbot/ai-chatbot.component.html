@@ -9,7 +9,6 @@
     type="button">
     <span class="ai-icon">🤖</span>
     <span class="pulse-ring"></span>
-    <span class="toggle-text">AI Assistant</span>
   </button>
 
   <!-- Chatbot Window -->
@@ -24,15 +23,9 @@
     <!-- Header -->
     <div class="chatbot-header">
       <div class="header-content">
-        <button 
-          class="ai-avatar clickable-avatar"
-          (click)="testGoogleAI()"
-          [disabled]="isLoading"
-          aria-label="Test Google AI"
-          title="Click to test Google AI connection"
-          type="button">
+        <div class="ai-avatar">
           🤖
-        </button>
+        </div>
         <div class="header-text">
           <h3 id="chatbot-title" class="title">pizzi.ai	</h3>
           <p id="chatbot-description" class="status" [attr.aria-live]="isLoading ? 'polite' : 'off'">
@@ -70,47 +63,21 @@
 
     <!-- Chat Content -->
     <div *ngIf="!isMinimized" class="chatbot-content">
-      
-      <!-- Welcome Message -->
-      <div *ngIf="chatHistory.length === 0" class="welcome-section">
-        <div class="welcome-message">
-          <h4>👋 Welcome to pizzi.ai!</h4>
-          <p>I'm here to help you with analytics, insights, and support. Try asking me:</p>
-        </div>
-        
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-          <button 
-            *ngFor="let action of quickActions"
-            (click)="sendQuickAction(action.text)"
-            class="quick-action-btn"
-            type="button">
-            <span class="action-icon">{{ action.icon }}</span>
-            <span class="action-text">{{ action.text }}</span>
-          </button>
-        </div>
-
-        <!-- Test Actions -->
-        <div class="test-actions">
-          <h5 class="test-section-title">🧪 AI Diagnostics</h5>
-          <button 
-            *ngFor="let action of testActions"
-            (click)="handleTestAction(action.action)"
-            class="test-action-btn"
-            type="button">
-            <span class="action-icon">{{ action.icon }}</span>
-            <span class="action-text">{{ action.text }}</span>
-          </button>
-        </div>
-              </div>
-
       <!-- Messages Container -->
       <div 
         #messagesContainer
         class="messages-container"
         role="log"
         aria-label="Chat messages"
-        [class.has-messages]="chatHistory.length > 0">
+        [class.has-messages]="chatHistory.length > 0 || isLoading">
+        
+        <!-- Empty State Message -->
+        <div *ngIf="chatHistory.length === 0 && !isLoading" class="empty-state">
+          <div class="empty-state-content">
+            <div class="empty-state-icon">💬</div>
+            <div class="empty-state-text">Ask me anything about your Pizza World business!</div>
+          </div>
+        </div>
         
         <div 
           *ngFor="let message of chatHistory; trackBy: trackByMessageId"

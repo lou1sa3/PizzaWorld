@@ -336,10 +336,12 @@ export class AIService {
       .replace(/\\t/g, '\t')
       .replace(/\\\\/g, '\\');
     
-    // Convert markdown-like formatting to HTML
+    // Convert markdown-like formatting to HTML and style currency values green
     return cleanMessage
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      // Make big currency values green (e.g., $50,211,527.85)
+      .replace(/\$([0-9,]+(?:\.[0-9]{2})?)/g, '<span style="color: #10b981; font-weight: 600;">$$1</span>')
       .replace(/\n/g, '<br>')
       .replace(/•/g, '&bull;')
       .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
