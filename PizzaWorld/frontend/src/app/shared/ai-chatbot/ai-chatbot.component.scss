@@ -4,6 +4,13 @@
   right: 20px;
   z-index: 1000;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Hide toggle button on mobile - it's in sidebar instead */
+  @media (max-width: 1024px) {
+    .chatbot-toggle-btn {
+      display: none;
+    }
+  }
 }
 
 /* Toggle Button */
@@ -63,7 +70,7 @@
 /* Chatbot Window */
 .chatbot-window {
   width: 420px;
-  height: 600px;
+  height: 500px;
   background: white;
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
@@ -116,6 +123,18 @@
     font-size: 16px;
     font-weight: 600;
     line-height: 1.2;
+
+    .beta-label {
+      margin-left: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      background: rgba(255,255,255,0.25);
+      color: #fef08a;
+      padding: 2px 4px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
   }
 
   .status {
@@ -279,12 +298,12 @@
   min-height: 60px; /* Minimum height when empty */
   max-height: 400px; /* Ensure it has a maximum height */
   scroll-behavior: smooth; /* Smooth scrolling */
-  
+
   &.has-messages {
     padding: 16px 20px;
     min-height: 0; /* Remove min-height when there are messages */
   }
-  
+
   /* When empty, center content vertically */
   &:not(.has-messages) {
     display: flex;
@@ -414,6 +433,28 @@
 .assistant-avatar {
   background: #FF6B35;
   color: white;
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* Responsive behaviour: full-screen chat on small devices       */
+/* ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .ai-chatbot-container {
+    bottom: 0;
+    right: 0;
+  }
+
+  .chatbot-window {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    max-height: none;
+  }
+
+  .messages-container {
+    max-height: calc(100vh - 240px); /* leave room for header & input */
+  }
 }
 
 .message-header {
@@ -768,4 +809,4 @@
       background: #64748b;
     }
   }
-} 
+}

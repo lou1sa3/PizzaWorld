@@ -1,7 +1,7 @@
 <!-- AI Chatbot Component -->
 <div class="ai-chatbot-container">
   <!-- Chatbot Toggle Button -->
-  <button 
+  <button
     *ngIf="!isOpen"
     (click)="toggleChatbot()"
     class="chatbot-toggle-btn"
@@ -12,8 +12,8 @@
   </button>
 
   <!-- Chatbot Window -->
-  <div 
-    *ngIf="isOpen" 
+  <div
+    *ngIf="isOpen"
     class="chatbot-window"
     [class.minimized]="isMinimized"
     role="dialog"
@@ -27,15 +27,18 @@
           🤖
         </div>
         <div class="header-text">
-          <h3 id="chatbot-title" class="title">pizzi.ai	</h3>
+          <h3 id="chatbot-title" class="title">
+            pizzi.ai
+            <span class="beta-label">BETA - data may be incorrect</span>
+          </h3>
           <p id="chatbot-description" class="status" [attr.aria-live]="isLoading ? 'polite' : 'off'">
             {{ getChatbotStatusText() }}
           </p>
         </div>
       </div>
-      
+
       <div class="header-actions">
-        <button 
+        <button
           *ngIf="!isMinimized"
           (click)="minimizeChatbot()"
           class="action-btn minimize-btn"
@@ -43,7 +46,7 @@
           type="button">
           <span class="icon">−</span>
         </button>
-        <button 
+        <button
           *ngIf="isMinimized"
           (click)="maximizeChatbot()"
           class="action-btn maximize-btn"
@@ -51,7 +54,7 @@
           type="button">
           <span class="icon">□</span>
         </button>
-        <button 
+        <button
           (click)="toggleChatbot()"
           class="action-btn close-btn"
           aria-label="Close chat"
@@ -64,13 +67,13 @@
     <!-- Chat Content -->
     <div *ngIf="!isMinimized" class="chatbot-content">
       <!-- Messages Container -->
-      <div 
+      <div
         #messagesContainer
         class="messages-container"
         role="log"
         aria-label="Chat messages"
         [class.has-messages]="chatHistory.length > 0 || isLoading">
-        
+
         <!-- Empty State Message -->
         <div *ngIf="chatHistory.length === 0 && !isLoading" class="empty-state">
           <div class="empty-state-content">
@@ -78,13 +81,13 @@
             <div class="empty-state-text">Ask me anything about your Pizza World business!</div>
           </div>
         </div>
-        
-        <div 
+
+        <div
           *ngFor="let message of chatHistory; trackBy: trackByMessageId"
           class="message"
           [class.user-message]="isUserMessage(message)"
           [class.assistant-message]="isAssistantMessage(message)">
-          
+
           <!-- User Message -->
           <div *ngIf="isUserMessage(message)" class="user-message-content">
             <div class="message-bubble user-bubble">
@@ -102,7 +105,7 @@
                 <span class="category-icon">{{ getMessageCategoryIcon(message.category) }}</span>
                 <span class="assistant-label">pizzi.ai</span>
               </div>
-              <div 
+              <div
                 class="message-text"
                 [innerHTML]="formatMessage(message.message)">
               </div>
@@ -133,7 +136,7 @@
         <div class="error-message">
           <span class="error-icon">⚠️</span>
           <span class="error-text">{{ error }}</span>
-          <button 
+          <button
             (click)="retryLastMessage()"
             class="retry-btn"
             type="button">
@@ -155,8 +158,8 @@
             [disabled]="isLoading"
             aria-label="Type your message"
             maxlength="1000"></textarea>
-          
-          <button 
+
+          <button
             (click)="sendMessage()"
             [disabled]="!currentMessage.trim() || isLoading"
             class="send-btn"
@@ -166,9 +169,9 @@
             <span *ngIf="isLoading" class="loading-spinner"></span>
           </button>
         </div>
-        
+
         <div class="input-footer">
-          <button 
+          <button
             *ngIf="chatHistory.length > 0"
             (click)="clearChat()"
             class="clear-btn"
@@ -180,4 +183,4 @@
       </div>
     </div>
   </div>
-</div> 
+</div>

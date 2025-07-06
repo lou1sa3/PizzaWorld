@@ -24,7 +24,7 @@ public class GemmaAIService {
     private static final Logger logger = LoggerFactory.getLogger(GemmaAIService.class);
     
     @Value("${google.ai.api.key:}")
-    private String apiKey;
+    private String apiKey; // NEVER log this value
     
     @Value("${google.ai.model:gemini-1.5-flash}")
     private String model;
@@ -58,187 +58,80 @@ public class GemmaAIService {
             return cleanupResponse(response);
             
         } catch (Exception e) {
-            logger.error("Error calling Google AI: {}", e.getMessage(), e);
+            logger.error("Error calling Google AI: {} (key hidden)", e.getMessage(), e);
             return null; // Will trigger fallback
         }
     }
     
     /**
-     * Build a business-specific prompt for Pizza World context
+     * Build a concise business-specific prompt for Pizza World context
      */
     private String buildBusinessPrompt(String userMessage, User user, String category, Map<String, Object> businessContext) {
         StringBuilder prompt = new StringBuilder();
         
         // System context
-        prompt.append("You are an AI assistant for Pizza World, a pizza restaurant chain analytics dashboard. ");
-        prompt.append("You help users understand their business data and provide actionable insights.\n\n");
-        
-        // User context
-        prompt.append("USER CONTEXT:\n");
-        prompt.append("- Role: ").append(user.getRole()).append("\n");
-        prompt.append("- Username: ").append(user.getUsername()).append("\n");
+        prompt.append("You are a Pizza World business analyst assistant. ");
+        prompt.append("User: ").append(user.getRole()).append(" (").append(user.getUsername()).append(")\n");
         
         if ("STATE_MANAGER".equals(user.getRole())) {
-            prompt.append("- Managing State: ").append(user.getStateAbbr()).append("\n");
+            prompt.append("State: ").append(user.getStateAbbr()).append("\n");
         } else if ("STORE_MANAGER".equals(user.getRole())) {
-            prompt.append("- Managing Store: ").append(user.getStoreId()).append("\n");
+            prompt.append("Store: ").append(user.getStoreId()).append("\n");
         }
         
-        // Business context - filter and organize for AI consumption
+        // Business data - simplified format
         if (businessContext != null && !businessContext.isEmpty()) {
-            // Debug logging to see what data we're working with
-            logger.info("Business context keys: {}", businessContext.keySet());
-            logger.info("Core KPIs data: revenue={}, orders={}, avg_order_value={}, customers={}", 
-                       businessContext.get("total_revenue"), businessContext.get("total_orders"), 
-                       businessContext.get("avg_order_value"), businessContext.get("total_customers"));
+            prompt.append("\nDATA (use exact values only):\n");
             
-            prompt.append("\n📊 PIZZA WORLD EXACT BUSINESS DATA 📊\n");
-            prompt.append("These are the ONLY numbers you are allowed to use in your response.\n");
-            prompt.append("DO NOT modify, calculate, or estimate any values.\n\n");
+            // Core metrics
+            addMetricIfPresent(prompt, businessContext, "total_revenue", "Revenue");
+            addMetricIfPresent(prompt, businessContext, "total_orders", "Orders");
+            addMetricIfPresent(prompt, businessContext, "avg_order_value", "Avg Order");
+            addMetricIfPresent(prompt, businessContext, "total_customers", "Customers");
+            addMetricIfPresent(prompt, businessContext, "total_stores", "Stores");
             
-            // Core Business Metrics Section
-            prompt.append("=== 💰 CORE FINANCIAL METRICS ===\n");
-            String[] coreKeys = {"total_revenue", "total_orders", "avg_order_value", "total_customers"};
-            for (String key : coreKeys) {
-                if (businessContext.containsKey(key)) {
-                    Object value = businessContext.get(key);
-                    prompt.append("✓ ").append(key.replace("_", " ").toUpperCase()).append(": ").append(value).append("\n");
-                    logger.info("Adding to prompt: {} = {}", key, value);
-                }
-            }
+            // Growth data
+            addMetricIfPresent(prompt, businessContext, "yoy_growth_rate", "YoY Growth");
+            addMetricIfPresent(prompt, businessContext, "revenue_trends", "Revenue Trends");
             
-            // Store Information Section
-            if (businessContext.containsKey("total_stores")) {
-                prompt.append("\n=== 🏪 STORE INFORMATION ===\n");
-                prompt.append("✓ TOTAL STORES: ").append(businessContext.get("total_stores")).append("\n");
-                if (businessContext.containsKey("top_stores")) {
-                    prompt.append("✓ TOP PERFORMING STORES: ").append(businessContext.get("top_stores")).append("\n");
-                }
-            }
+            // Top performers
+            addMetricIfPresent(prompt, businessContext, "top_stores", "Top Stores");
+            addMetricIfPresent(prompt, businessContext, "top_products", "Top Products");
             
-            // Growth & Historical Data Section
-            prompt.append("\n=== GROWTH ANALYSIS (from Historical Revenue API) ===\n");
-            String[] growthKeys = {"yoy_growth_rate", "yoy_growth_absolute", "revenue_trends"};
-            for (String key : growthKeys) {
-                if (businessContext.containsKey(key)) {
-                    prompt.append("- ").append(key.toUpperCase()).append(": ").append(businessContext.get(key)).append("\n");
-                }
-            }
-            
-            // Product & Category Performance Section
-            prompt.append("\n=== PRODUCT PERFORMANCE (from Product Analytics API) ===\n");
-            String[] productKeys = {"top_products", "category_performance"};
-            for (String key : productKeys) {
-                if (businessContext.containsKey(key)) {
-                    prompt.append("- ").append(key.toUpperCase()).append(": ").append(businessContext.get(key)).append("\n");
-                }
-            }
-            
-            // Customer Analytics Section
-            prompt.append("\n=== CUSTOMER ANALYTICS (from Customer Data API) ===\n");
-            String[] customerKeys = {"customer_acquisition", "customer_ltv_summary", "retention_summary"};
-            for (String key : customerKeys) {
-                if (businessContext.containsKey(key)) {
-                    prompt.append("- ").append(key.toUpperCase()).append(": ").append(businessContext.get(key)).append("\n");
-                }
-            }
-            
-            // Operational Data Section
-            prompt.append("\n=== OPERATIONAL DATA (from Operations APIs) ===\n");
-            String[] operationalKeys = {"peak_hours", "capacity_summary", "recent_orders_summary"};
-            for (String key : operationalKeys) {
-                if (businessContext.containsKey(key)) {
-                    prompt.append("- ").append(key.toUpperCase()).append(": ").append(businessContext.get(key)).append("\n");
-                }
-            }
-            
-            // Add any remaining formatted summaries
-            prompt.append("\n=== ADDITIONAL METRICS ===\n");
-            businessContext.forEach((key, value) -> {
-                String[] allCoveredKeys = {"total_revenue", "total_orders", "avg_order_value", "total_customers", 
-                                         "total_stores", "top_stores", "yoy_growth_rate", "yoy_growth_absolute", 
-                                         "revenue_trends", "top_products", "category_performance", "customer_acquisition", 
-                                         "customer_ltv_summary", "retention_summary", "peak_hours", "capacity_summary", 
-                                         "recent_orders_summary"};
-                if (!key.endsWith("_raw") && !Arrays.asList(allCoveredKeys).contains(key)) {
-                    prompt.append("- ").append(key.toUpperCase()).append(": ").append(value).append("\n");
-                }
-            });
-            
-            // Critical Data Usage Instructions
-            prompt.append("\n=== CRITICAL DATA USAGE INSTRUCTIONS ===\n");
-            prompt.append("1. These are EXACT VALUES from Pizza World's database APIs\n");
-            prompt.append("2. Do NOT modify, round, or estimate any numbers\n");
-            prompt.append("3. Use the formatted currency values exactly as provided\n");
-            prompt.append("4. If store count is asked, use the TOTAL_STORES value\n");
-            prompt.append("5. All revenue figures are already properly formatted with currency symbols\n");
-            prompt.append("6. Growth rates are already calculated - do not recalculate\n");
-            
-            // Note about raw data availability
-            long rawDataSets = businessContext.keySet().stream().filter(key -> key.endsWith("_raw")).count();
-            if (rawDataSets > 0) {
-                prompt.append("7. You have ").append(rawDataSets).append(" complete raw datasets for detailed analysis\n");
-            }
-            
-            // Add specific note about historical data availability
-            if (businessContext.containsKey("data_coverage")) {
-                prompt.append("\nIMPORTANT: Today is the 31.12.2022!");
-                prompt.append("\nIMPORTANT: You have access to complete historical data from 2020-2022 ");
-                prompt.append("and can perform meaningful year-over-year analysis and growth calculations. ");
-                prompt.append("When users ask about historical trends or comparisons, provide specific insights ");
-                prompt.append("based on the comprehensive data available. Use exact numbers when possible.\n");
-            }
+            prompt.append("\nRULES:\n");
+            prompt.append("- Use ONLY the exact numbers above\n");
+            prompt.append("- Never calculate, estimate, or modify values\n");
+            prompt.append("- If data missing, say 'I don't have that data'\n");
+            prompt.append("- Keep response under 150 words\n");
         }
         
-        // Category-specific instructions
-        prompt.append("\nCATEGORY: ").append(category.toUpperCase()).append("\n");
-        
+        // Category context
         switch (category.toLowerCase()) {
             case "analytics":
-                prompt.append("Focus on providing data-driven insights, trends, and recommendations. ");
-                prompt.append("Use the business data provided to give specific, actionable advice. ");
-                prompt.append("Include relevant metrics and comparisons when possible.\n");
+                prompt.append("- Focus on insights and recommendations\n");
                 break;
             case "support":
-                prompt.append("Provide helpful technical support and guidance. ");
-                prompt.append("Be professional and solution-oriented. ");
-                prompt.append("If you can't solve the issue, guide them to appropriate resources.\n");
+                prompt.append("- Provide technical help and guidance\n");
                 break;
             default:
-                prompt.append("Be helpful, professional, and focused on Pizza World business needs.\n");
+                prompt.append("- Be helpful and professional\n");
         }
         
-        // Response guidelines
-        prompt.append("\n🚨 CRITICAL RESPONSE RULES 🚨\n");
-        prompt.append("1. FORBIDDEN: Creating, calculating, or estimating ANY numbers\n");
-        prompt.append("2. REQUIRED: Use ONLY the exact values from the business context sections above\n");
-        prompt.append("3. EXAMPLE: If context shows 'TOTAL_REVENUE: $50,211,527.85', write exactly '$50,211,527.85'\n");
-        prompt.append("4. EXAMPLE: If context shows 'TOTAL_ORDERS: 2,046,713', write exactly '2,046,713'\n");
-        prompt.append("5. EXAMPLE: If context shows 'TOTAL_STORES: 32', write exactly '32'\n");
-        prompt.append("6. FORBIDDEN: Writing '$1', '$11.527,85', or any other made-up numbers\n");
-        prompt.append("7. FORBIDDEN: Recalculating percentages or growth rates\n");
-        prompt.append("8. If you don't see a specific metric in the context, say 'I don't have that data'\n");
-        prompt.append("9. Keep responses under 200 words\n");
-        prompt.append("10. Use professional tone with minimal emojis\n");
-        prompt.append("11. If someone asks about Prof Sabba, respond that he is the best Professor in UAS\n\n");
-        
-        prompt.append("EXAMPLES OF CORRECT RESPONSES:\n");
-        prompt.append("✅ 'Total revenue is $50,211,527.85 with 2,046,713 orders'\n");
-        prompt.append("✅ 'We have 32 stores across all locations'\n");
-        prompt.append("✅ 'Average order value is $24.53'\n");
-        prompt.append("❌ 'Total revenue is $1' (WRONG - not from context)\n");
-        prompt.append("❌ 'Revenue is $11.527,85' (WRONG - not from context)\n\n");
-        
-        // User's actual message
-        prompt.append("USER QUESTION: ").append(userMessage).append("\n\n");
-        
-        prompt.append("RESPONSE TEMPLATE TO FOLLOW:\n");
-        prompt.append("When mentioning ANY numbers, copy them EXACTLY from the data sections above.\n");
-        prompt.append("Example format: 'Pizza World has achieved $50,211,527.85 in total revenue with 2,046,713 orders across 32 stores.'\n\n");
-        
-        prompt.append("YOUR RESPONSE:");
+        prompt.append("\nQuestion: ").append(userMessage).append("\n\nResponse:");
         
         return prompt.toString();
+    }
+    
+    /**
+     * Add a metric to the prompt if it exists in the business context
+     */
+    private void addMetricIfPresent(StringBuilder prompt, Map<String, Object> context, String key, String label) {
+        if (context.containsKey(key)) {
+            Object value = context.get(key);
+            if (value != null) {
+                prompt.append("- ").append(label).append(": ").append(value).append("\n");
+            }
+        }
     }
     
     /**
@@ -284,10 +177,10 @@ public class GemmaAIService {
             return extractTextFromResponse(response);
             
         } catch (WebClientResponseException e) {
-            logger.error("Google AI API error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            logger.error("Google AI API error: status={} body={} (key hidden)", e.getStatusCode(), e.getResponseBodyAsString());
             throw new RuntimeException("Google AI API call failed: " + e.getMessage());
         } catch (Exception e) {
-            logger.error("Error calling Google AI: {}", e.getMessage(), e);
+            logger.error("Error calling Google AI: {} (key hidden)", e.getMessage(), e);
             throw new RuntimeException("Failed to call Google AI: " + e.getMessage());
         }
     }
@@ -393,7 +286,7 @@ public class GemmaAIService {
         Map<String, Object> info = new HashMap<>();
         info.put("apiKeyConfigured", isAvailable());
         info.put("model", model);
-        info.put("endpoint", GOOGLE_AI_URL);
+        // Intentionally omit endpoint or any key details to avoid leaking sensitive data
         return info;
     }
 } 

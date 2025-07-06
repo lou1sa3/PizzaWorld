@@ -2,6 +2,7 @@ package pizzaworld.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import pizzaworld.model.AIInsight;
@@ -10,11 +11,16 @@ import pizzaworld.model.CustomUserDetails;
 import pizzaworld.model.User;
 import pizzaworld.service.AIService;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
+
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.http.codec.ServerSentEvent;
+import reactor.core.publisher.Flux;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -58,6 +64,38 @@ public class AIController {
                 "error", "Unable to process your message at this time."
             ));
         }
+    }
+
+    /**
+     * Streaming chat endpoint (Server-Sent Events).
+     * Accepts the same ChatRequest but returns a text/event-stream where each SSE data field
+     * contains one whitespace-delimited token of the assistant’s answer.
+     * This keeps implementation simple while giving the front-end incremental updates.
+     */
+    @PostMapping(path = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> chatStream(
+            @RequestBody ChatRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        User user = userDetails.getUser();
+
+        // Produce the assistant message (blocking call – could be made reactive later)
+        ChatMessage aiMsg = aiService.processChatMessage(
+                request.sessionId != null ? request.sessionId : UUID.randomUUID().toString(),
+                request.message,
+                user);
+
+        String answer = aiMsg.getMessage();
+        if (answer == null) answer = "";
+
+        // Stream words every 40 ms for a smooth effect
+        String[] tokens = answer.split("\\s+");
+
+        return Flux.range(0, tokens.length)
+                .delayElements(Duration.ofMillis(40))
+                .map(i -> ServerSentEvent.builder(tokens[i]).event("message").build())
+                .concatWith(Flux.just(ServerSentEvent.<String>builder()
+                        .event("done").data("[DONE]").build()));
     }
     
     /**

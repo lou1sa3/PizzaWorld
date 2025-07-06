@@ -12,7 +12,7 @@ set DB_PASSWORD=PizzaWorld.2025
 set JWT_SECRET=supergeheimerSchluessel123456789012345
 set GMAIL_APP_PASSWORD=obcs zapk yyqb wedb
 REM Google AI Configuration for Local Testing
-set GOOGLE_AI_API_KEY=x
+set GOOGLE_AI_API_KEY=xyz
 set GOOGLE_AI_MODEL=gemma-3n-e2b-it
 
 echo.

@@ -13,7 +13,12 @@ import pizzaworld.repository.OptimizedPizzaRepo;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.Deque;
+import java.util.ArrayDeque;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 @Service
 public class AIService {
@@ -28,10 +33,36 @@ public class AIService {
     
     @Autowired
     private GemmaAIService gemmaAIService;
+
+    @Autowired
+    private StaticDocRetriever docRetriever;
     
-    // In-memory storage for demo purposes - in production, use a database
-    private final Map<String, List<ChatMessage>> chatSessions = new HashMap<>();
+    // Ephemeral in-memory chat history – capped so it is **not** persistent and cannot grow unbounded
+    private static final int MAX_CHAT_HISTORY = 20;
+    private final Map<String, Deque<ChatMessage>> chatSessions = new ConcurrentHashMap<>();
+
     private final List<AIInsight> insights = new ArrayList<>();
+
+    // ────────────────── Business-context cache with improved strategy ──────────────────
+    private static final long CONTEXT_CACHE_TTL_MS = 60_000; // 1 minute
+    private static final long CRITICAL_DATA_CACHE_TTL_MS = 30_000; // 30 seconds for critical data
+    private static class CachedContext {
+        final Map<String, Object> value;
+        final long timestamp;
+        final String userRole;
+        final String category;
+        CachedContext(Map<String, Object> v, String role, String cat) { 
+            this.value = v; 
+            this.timestamp = System.currentTimeMillis(); 
+            this.userRole = role;
+            this.category = cat;
+        }
+        
+        boolean isExpired(long ttl) {
+            return (System.currentTimeMillis() - timestamp) > ttl;
+        }
+    }
+    private final Map<String, CachedContext> contextCache = new ConcurrentHashMap<>();
     
     /**
      * Process a chat message and generate an AI response
@@ -48,18 +79,52 @@ public class AIService {
             // Categorize the message
             String category = categorizeMessage(message);
             userMessage.setCategory(category);
+
+            // ─── Build short conversational context (last 5 pairs) ───
+            StringBuilder prior = new StringBuilder();
+            Deque<ChatMessage> history = chatSessions.get(sessionId);
+            if (history != null && !history.isEmpty()) {
+                prior.append("PREVIOUS MESSAGES:\n");
+                history.stream()
+                        .skip(Math.max(0, history.size() - 10)) // last 10 messages (5 pairs)
+                        .forEach(m -> {
+                            String role = "user".equals(m.getMessageType()) ? "User" : "Assistant";
+                            prior.append(role).append(": ").append(m.getMessage()).append("\n");
+                        });
+                prior.append("\n---\n");
+            }
+
+            String messageWithHistory = prior.append(message).toString();
             
+            // Attach knowledge snippet if there's a match
+            Optional<String> snippetOpt = docRetriever.findMatch(message);
+            String finalPrompt = messageWithHistory;
+            if (snippetOpt.isPresent()) {
+                finalPrompt += "\n\nKNOWLEDGE SNIPPET:\n" + snippetOpt.get();
+            }
+
             // Generate AI response with Gemma AI integration
-            String aiResponse = generateAIResponseWithGemma(message, user, category);
+            String aiResponse = generateAIResponseWithGemma(finalPrompt, user, category);
+
+            // ─── Number-consistency guard-rail ───
+            Map<String, Object> businessContext = gatherBusinessContext(user, category); // cached
+            if (!isNumberConsistent(aiResponse, businessContext)) {
+                logger.warn("AI response failed numeric consistency check – falling back to rule-based response");
+                aiResponse = generateRuleBasedResponse(message, user, category, businessContext);
+            }
             
             // Create AI response message
             ChatMessage aiMessage = new ChatMessage(sessionId, "AI_ASSISTANT", aiResponse, "assistant");
             aiMessage.setId(UUID.randomUUID().toString());
             aiMessage.setCategory(category);
             
-            // Store messages in session
-            chatSessions.computeIfAbsent(sessionId, k -> new ArrayList<>()).add(userMessage);
-            chatSessions.computeIfAbsent(sessionId, k -> new ArrayList<>()).add(aiMessage);
+            // Store messages (non-persistent – only last 20 kept)
+            Deque<ChatMessage> deque = chatSessions.computeIfAbsent(sessionId, k -> new ArrayDeque<>());
+            deque.addLast(userMessage);
+            deque.addLast(aiMessage);
+            while (deque.size() > MAX_CHAT_HISTORY) {
+                deque.removeFirst();
+            }
             
             return aiMessage;
             
@@ -107,35 +172,60 @@ public class AIService {
      * Gather comprehensive business context with EXACT data from ALL APIs
      */
     private Map<String, Object> gatherBusinessContext(User user, String category) {
+        // ─── Improved cache lookup ───
+        String cacheKey = buildCacheKey(user, category);
+        CachedContext cached = contextCache.get(cacheKey);
+        
+        if (cached != null) {
+            // Use different TTL for critical data
+            long ttl = isCriticalData(category) ? CRITICAL_DATA_CACHE_TTL_MS : CONTEXT_CACHE_TTL_MS;
+            if (!cached.isExpired(ttl)) {
+                logger.debug("Cache hit for key: {}", cacheKey);
+                return cached.value;
+            } else {
+                logger.debug("Cache expired for key: {}", cacheKey);
+                contextCache.remove(cacheKey);
+            }
+        }
+
         Map<String, Object> context = new HashMap<>();
         
         try {
-            // Add role-specific business data with ALL available API data
+            // Add role-specific business data with validation
             switch (user.getRole()) {
                 case "HQ_ADMIN":
                     // === CORE KPIs ===
                     Map<String, Object> hqKpis = repo.getHQKPIs();
                     if (hqKpis != null) {
-                        // Debug logging to identify actual field names
-                        logger.info("HQ KPIs raw data: {}", hqKpis);
+                        logger.debug("HQ KPIs raw data fields: {}", hqKpis.keySet());
                         
-                        // HARDCODED VALUES FROM ACTUAL API RESPONSE
-                        // Using exact values from the API to bypass field mapping issues
-                        double totalRevenue = 5.021152785E7; // $50,211,527.85
-                        int totalOrders = 2046713;
-                        int totalCustomers = 23089;
-                        int totalStores = 32;
-                        double avgOrderValue = totalRevenue / totalOrders; // Calculate correct AOV
-                        
+                        // Standardized field extraction with validation
+                        Double totalRevenue = extractNumericValue(hqKpis, "total_revenue", "revenue");
+                        Integer totalOrders = extractIntegerValue(hqKpis, "total_orders", "orders");
+                        Integer totalCustomers = extractIntegerValue(hqKpis, "total_customers", "customers");
+                        Integer totalStores = extractIntegerValue(hqKpis, "total_stores", "stores");
+
+                        // Validate extracted values
+                        if (totalRevenue == null || totalOrders == null || totalCustomers == null) {
+                            logger.warn("Core KPI data validation failed - missing required fields");
+                            break; // Skip this role if core data is invalid
+                        }
+
+                        double avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
                         context.put("total_revenue", formatCurrency(totalRevenue));
                         context.put("total_orders", formatNumber(totalOrders));
                         context.put("avg_order_value", formatCurrency(avgOrderValue));
                         context.put("total_customers", formatNumber(totalCustomers));
-                        context.put("total_stores", totalStores);
-                        context.put("raw_kpis", hqKpis); // Include raw data for reference
                         
-                        // Debug logging for formatted values
-                        logger.info("HARDCODED KPIs - Revenue: {}, Orders: {}, AOV: {}, Customers: {}, Stores: {}", 
+                        // Only add stores count if we have valid data
+                        if (totalStores != null && totalStores > 0) {
+                            context.put("total_stores", totalStores);
+                        }
+                        
+                        context.put("raw_kpis", hqKpis); // Include raw data for reference if needed
+                        
+                        logger.debug("Processed KPIs - Revenue: {}, Orders: {}, AOV: {}, Customers: {}, Stores: {}", 
                                    context.get("total_revenue"), context.get("total_orders"), 
                                    context.get("avg_order_value"), context.get("total_customers"), totalStores);
                     }
@@ -254,10 +344,18 @@ public class AIService {
                 case "STATE_MANAGER":
                     Map<String, Object> stateKpis = repo.getStateKPIs(user.getStateAbbr());
                     if (stateKpis != null) {
-                        context.put("state_revenue", formatCurrency(((Number) stateKpis.getOrDefault("revenue", 0)).doubleValue()));
-                        context.put("state_orders", formatNumber(((Number) stateKpis.getOrDefault("orders", 0)).intValue()));
-                        context.put("state_avg_order_value", formatCurrency(((Number) stateKpis.getOrDefault("avg_order_value", 0)).doubleValue()));
-                        context.put("state", user.getStateAbbr());
+                        Double stateRevenue = extractNumericValue(stateKpis, "revenue", "total_revenue");
+                        Integer stateOrders = extractIntegerValue(stateKpis, "orders", "total_orders");
+                        Double stateAvgOrder = extractNumericValue(stateKpis, "avg_order_value", "average_order_value");
+                        
+                        if (stateRevenue != null && stateOrders != null) {
+                            context.put("state_revenue", formatCurrency(stateRevenue));
+                            context.put("state_orders", formatNumber(stateOrders));
+                            context.put("state_avg_order_value", formatCurrency(stateAvgOrder != null ? stateAvgOrder : 0));
+                            context.put("state", user.getStateAbbr());
+                        } else {
+                            logger.warn("State KPI data validation failed for state: {}", user.getStateAbbr());
+                        }
                     }
                     
                     // State-specific historical data
@@ -277,10 +375,18 @@ public class AIService {
                 case "STORE_MANAGER":
                     Map<String, Object> storeKpis = repo.getStoreKPIs(user.getStoreId());
                     if (storeKpis != null) {
-                        context.put("store_revenue", formatCurrency(((Number) storeKpis.getOrDefault("revenue", 0)).doubleValue()));
-                        context.put("store_orders", formatNumber(((Number) storeKpis.getOrDefault("orders", 0)).intValue()));
-                        context.put("store_avg_order_value", formatCurrency(((Number) storeKpis.getOrDefault("avg_order_value", 0)).doubleValue()));
-                        context.put("store_id", user.getStoreId());
+                        Double storeRevenue = extractNumericValue(storeKpis, "revenue", "total_revenue");
+                        Integer storeOrders = extractIntegerValue(storeKpis, "orders", "total_orders");
+                        Double storeAvgOrder = extractNumericValue(storeKpis, "avg_order_value", "average_order_value");
+                        
+                        if (storeRevenue != null && storeOrders != null) {
+                            context.put("store_revenue", formatCurrency(storeRevenue));
+                            context.put("store_orders", formatNumber(storeOrders));
+                            context.put("store_avg_order_value", formatCurrency(storeAvgOrder != null ? storeAvgOrder : 0));
+                            context.put("store_id", user.getStoreId());
+                        } else {
+                            logger.warn("Store KPI data validation failed for store: {}", user.getStoreId());
+                        }
                     }
                     
                     // Store-specific historical data
@@ -305,6 +411,16 @@ public class AIService {
         } catch (Exception e) {
             logger.error("Error gathering business context: {}", e.getMessage(), e);
         }
+        
+        // ─── Validate context data quality ───
+        validateBusinessContext(context, user.getRole());
+        
+        // ─── Cache store with metadata ───
+        contextCache.put(cacheKey, new CachedContext(context, user.getRole(), category));
+        logger.debug("Cache stored for key: {}", cacheKey);
+        
+        // Clean up expired cache entries periodically
+        cleanupExpiredCache();
         
         return context;
     }
@@ -609,7 +725,8 @@ public class AIService {
      * Get chat history for a session
      */
     public List<ChatMessage> getChatHistory(String sessionId) {
-        return chatSessions.getOrDefault(sessionId, new ArrayList<>());
+        Deque<ChatMessage> deque = chatSessions.get(sessionId);
+        return deque == null ? new ArrayList<>() : new ArrayList<>(deque);
     }
     
     /**
@@ -1038,5 +1155,340 @@ public class AIService {
         response.put("type", "product");
         response.put("answer", generateProductInsight(user));
         return response;
+    }
+
+    /**
+     * Check that every monetary value and large number mentioned in reply
+     * exists in the businessContext with proper validation.
+     */
+    private boolean isNumberConsistent(String reply, Map<String, Object> ctx) {
+        if (reply == null || reply.isBlank()) return true;
+
+        // Extract all valid numbers from context with semantic meaning
+        Set<String> validNumbers = extractValidNumbers(ctx);
+        
+        // Find all numbers in the reply
+        Pattern numberPattern = Pattern.compile("(\\$[0-9,]+(?:\\.[0-9]{2})?|[0-9]{1,3}(?:,[0-9]{3})+(?:\\.[0-9]{2})?)");
+        Matcher matcher = numberPattern.matcher(reply);
+        
+        while (matcher.find()) {
+            String foundNumber = matcher.group();
+            String normalizedNumber = normalizeNumber(foundNumber);
+            
+            // Check if this number exists in our valid set
+            if (!validNumbers.contains(normalizedNumber)) {
+                logger.warn("AI response contains unvalidated number: {} (normalized: {})", foundNumber, normalizedNumber);
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Extract all valid numbers from business context with proper normalization
+     */
+    private Set<String> extractValidNumbers(Map<String, Object> ctx) {
+        Set<String> validNumbers = new HashSet<>();
+        
+        for (Map.Entry<String, Object> entry : ctx.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            
+            if (value == null) continue;
+            
+            // Skip raw data collections to avoid false positives
+            if (key.endsWith("_raw")) continue;
+            
+            String valueStr = value.toString();
+            
+            // Extract numbers from formatted strings
+            Pattern numberPattern = Pattern.compile("(\\$[0-9,]+(?:\\.[0-9]{2})?|[0-9]{1,3}(?:,[0-9]{3})+(?:\\.[0-9]{2})?)");
+            Matcher matcher = numberPattern.matcher(valueStr);
+            
+            while (matcher.find()) {
+                String number = matcher.group();
+                String normalized = normalizeNumber(number);
+                validNumbers.add(normalized);
+                
+                // Also add common variations (with/without decimals)
+                if (normalized.endsWith(".00")) {
+                    validNumbers.add(normalized.substring(0, normalized.length() - 3));
+                }
+            }
+        }
+        
+        return validNumbers;
+    }
+    
+    /**
+     * Normalize a number string for consistent comparison
+     */
+    private String normalizeNumber(String number) {
+        return number.replace("$", "").replace(",", "");
+    }
+    
+    /**
+     * Safely extract a numeric value from a map with fallback field names
+     */
+    private Double extractNumericValue(Map<String, Object> data, String... fieldNames) {
+        for (String fieldName : fieldNames) {
+            Object value = data.get(fieldName);
+            if (value != null) {
+                if (value instanceof Number) {
+                    return ((Number) value).doubleValue();
+                } else {
+                    try {
+                        return Double.parseDouble(value.toString());
+                    } catch (NumberFormatException e) {
+                        logger.warn("Failed to parse numeric value '{}' for field '{}': {}", value, fieldName, e.getMessage());
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Safely extract an integer value from a map with fallback field names
+     */
+    private Integer extractIntegerValue(Map<String, Object> data, String... fieldNames) {
+        for (String fieldName : fieldNames) {
+            Object value = data.get(fieldName);
+            if (value != null) {
+                if (value instanceof Number) {
+                    return ((Number) value).intValue();
+                } else {
+                    try {
+                        return Integer.parseInt(value.toString());
+                    } catch (NumberFormatException e) {
+                        logger.warn("Failed to parse integer value '{}' for field '{}': {}", value, fieldName, e.getMessage());
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Build a unique cache key for user and category
+     */
+    private String buildCacheKey(User user, String category) {
+        StringBuilder key = new StringBuilder();
+        key.append(user.getRole());
+        key.append("|").append(category);
+        
+        // Add user-specific identifiers for more granular caching
+        if ("STATE_MANAGER".equals(user.getRole()) && user.getStateAbbr() != null) {
+            key.append("|").append(user.getStateAbbr());
+        } else if ("STORE_MANAGER".equals(user.getRole()) && user.getStoreId() != null) {
+            key.append("|").append(user.getStoreId());
+        }
+        
+        return key.toString();
+    }
+    
+    /**
+     * Check if the category represents critical data that should have shorter cache TTL
+     */
+    private boolean isCriticalData(String category) {
+        return "analytics".equals(category) || "revenue".equals(category);
+    }
+    
+    /**
+     * Clean up expired cache entries to prevent memory leaks
+     */
+    private void cleanupExpiredCache() {
+        // Only clean up occasionally to avoid performance impact
+        if (contextCache.size() > 50 && Math.random() < 0.1) { // 10% chance when cache is large
+            contextCache.entrySet().removeIf(entry -> {
+                CachedContext cached = entry.getValue();
+                long ttl = isCriticalData(cached.category) ? CRITICAL_DATA_CACHE_TTL_MS : CONTEXT_CACHE_TTL_MS;
+                return cached.isExpired(ttl);
+            });
+            logger.debug("Cleaned up expired cache entries. Current size: {}", contextCache.size());
+        }
+    }
+    
+    /**
+     * Validate business context data for quality and consistency
+     */
+    private void validateBusinessContext(Map<String, Object> context, String userRole) {
+        List<String> issues = new ArrayList<>();
+        
+        // Check for required fields based on user role
+        switch (userRole) {
+            case "HQ_ADMIN":
+                validateHQData(context, issues);
+                break;
+            case "STATE_MANAGER":
+                validateStateData(context, issues);
+                break;
+            case "STORE_MANAGER":
+                validateStoreData(context, issues);
+                break;
+        }
+        
+        // Check for data consistency across all roles
+        validateDataConsistency(context, issues);
+        
+        if (!issues.isEmpty()) {
+            logger.warn("Data quality issues detected for role {}: {}", userRole, String.join(", ", issues));
+        }
+    }
+    
+    /**
+     * Validate HQ-level data requirements
+     */
+    private void validateHQData(Map<String, Object> context, List<String> issues) {
+        // Check core financial metrics
+        if (!context.containsKey("total_revenue") || context.get("total_revenue") == null) {
+            issues.add("Missing total revenue");
+        }
+        if (!context.containsKey("total_orders") || context.get("total_orders") == null) {
+            issues.add("Missing total orders");
+        }
+        if (!context.containsKey("total_customers") || context.get("total_customers") == null) {
+            issues.add("Missing total customers");
+        }
+        
+        // Validate revenue vs orders consistency
+        validateRevenueOrderConsistency(context, issues);
+    }
+    
+    /**
+     * Validate state-level data requirements
+     */
+    private void validateStateData(Map<String, Object> context, List<String> issues) {
+        if (!context.containsKey("state_revenue") || context.get("state_revenue") == null) {
+            issues.add("Missing state revenue");
+        }
+        if (!context.containsKey("state_orders") || context.get("state_orders") == null) {
+            issues.add("Missing state orders");
+        }
+        if (!context.containsKey("state")) {
+            issues.add("Missing state identifier");
+        }
+    }
+    
+    /**
+     * Validate store-level data requirements
+     */
+    private void validateStoreData(Map<String, Object> context, List<String> issues) {
+        if (!context.containsKey("store_revenue") || context.get("store_revenue") == null) {
+            issues.add("Missing store revenue");
+        }
+        if (!context.containsKey("store_orders") || context.get("store_orders") == null) {
+            issues.add("Missing store orders");
+        }
+        if (!context.containsKey("store_id")) {
+            issues.add("Missing store identifier");
+        }
+    }
+    
+    /**
+     * Validate data consistency across metrics
+     */
+    private void validateDataConsistency(Map<String, Object> context, List<String> issues) {
+        // Check for negative values
+        for (Map.Entry<String, Object> entry : context.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            
+            if (value instanceof String && ((String) value).contains("-")) {
+                String valueStr = (String) value;
+                if (valueStr.matches(".*-\\d+.*")) {
+                    issues.add("Negative value detected in " + key);
+                }
+            }
+        }
+        
+        // Check for suspiciously large or small values
+        validateValueRanges(context, issues);
+    }
+    
+    /**
+     * Validate revenue vs orders consistency
+     */
+    private void validateRevenueOrderConsistency(Map<String, Object> context, List<String> issues) {
+        try {
+            String revenueStr = (String) context.get("total_revenue");
+            String ordersStr = (String) context.get("total_orders");
+            String avgOrderStr = (String) context.get("avg_order_value");
+            
+            if (revenueStr != null && ordersStr != null && avgOrderStr != null) {
+                double revenue = parseNumberFromCurrency(revenueStr);
+                int orders = parseNumberFromFormatted(ordersStr);
+                double avgOrder = parseNumberFromCurrency(avgOrderStr);
+                
+                if (orders > 0) {
+                    double calculatedAvg = revenue / orders;
+                    double difference = Math.abs(calculatedAvg - avgOrder);
+                    
+                    // Allow for small rounding differences
+                    if (difference > 0.1) {
+                        issues.add(String.format("AOV inconsistency: calculated %.2f vs stated %.2f", calculatedAvg, avgOrder));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            issues.add("Error validating revenue/order consistency: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Validate value ranges to catch obviously wrong data
+     */
+    private void validateValueRanges(Map<String, Object> context, List<String> issues) {
+        try {
+            // Check for unrealistic revenue values
+            String revenueStr = (String) context.get("total_revenue");
+            if (revenueStr != null) {
+                double revenue = parseNumberFromCurrency(revenueStr);
+                if (revenue > 1_000_000_000) { // Over 1 billion
+                    issues.add("Revenue suspiciously high: " + revenueStr);
+                } else if (revenue < 0) {
+                    issues.add("Revenue is negative: " + revenueStr);
+                }
+            }
+            
+            // Check for unrealistic order counts
+            String ordersStr = (String) context.get("total_orders");
+            if (ordersStr != null) {
+                int orders = parseNumberFromFormatted(ordersStr);
+                if (orders > 100_000_000) { // Over 100 million orders
+                    issues.add("Order count suspiciously high: " + ordersStr);
+                } else if (orders < 0) {
+                    issues.add("Order count is negative: " + ordersStr);
+                }
+            }
+            
+            // Check for unrealistic average order values
+            String avgOrderStr = (String) context.get("avg_order_value");
+            if (avgOrderStr != null) {
+                double avgOrder = parseNumberFromCurrency(avgOrderStr);
+                if (avgOrder > 1000) { // Over $1000 per order
+                    issues.add("Average order value suspiciously high: " + avgOrderStr);
+                } else if (avgOrder < 0) {
+                    issues.add("Average order value is negative: " + avgOrderStr);
+                }
+            }
+        } catch (Exception e) {
+            issues.add("Error validating value ranges: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Parse a number from a currency formatted string
+     */
+    private double parseNumberFromCurrency(String currency) {
+        return Double.parseDouble(currency.replace("$", "").replace(",", ""));
+    }
+    
+    /**
+     * Parse a number from a formatted string (with commas)
+     */
+    private int parseNumberFromFormatted(String formatted) {
+        return Integer.parseInt(formatted.replace(",", ""));
     }
 } 

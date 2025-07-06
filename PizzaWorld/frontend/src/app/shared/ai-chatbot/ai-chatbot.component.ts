@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AIService, ChatMessage } from '../../core/ai.service';
@@ -22,10 +22,10 @@ export class AIChatbotComponent implements OnInit, OnDestroy, AfterViewChecked {
   chatHistory: ChatMessage[] = [];
   isLoading = false;
   error: string | null = null;
-  
+
   // Subscriptions
   private subscriptions: Subscription[] = [];
-  
+
 
 
   constructor(private aiService: AIService) {}
@@ -38,15 +38,8 @@ export class AIChatbotComponent implements OnInit, OnDestroy, AfterViewChecked {
         // No auto-scrolling - let users control scrolling manually
       }
     );
-    
-    // Subscribe to loading state
-    const loadingSubscription = this.aiService.chatLoading$.subscribe(
-      loading => {
-        this.isLoading = loading;
-      }
-    );
 
-    this.subscriptions.push(historySubscription, loadingSubscription);
+    this.subscriptions.push(historySubscription);
 
     // Load existing chat history
     this.loadChatHistory();
@@ -68,7 +61,7 @@ export class AIChatbotComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.isOpen = !this.isOpen;
     this.isMinimized = false;
     this.error = null;
-    
+
     if (this.isOpen) {
       // Focus on input when opened
       setTimeout(() => {
@@ -100,19 +93,43 @@ export class AIChatbotComponent implements OnInit, OnDestroy, AfterViewChecked {
     const message = this.currentMessage.trim();
     this.currentMessage = '';
     this.error = null;
+    this.isLoading = true;
 
     // Don't add user message locally - let the backend handle both user and AI messages
     // This prevents duplicates and ensures proper ordering
 
-    // Send message to AI service
-    this.aiService.sendMessage(message).subscribe({
-      next: (response) => {
-        // The AI service will update the chat history automatically via subscription
-        // No auto-scrolling - let users control scrolling manually
+    // Add user message locally for instant feedback
+    const userMsg: ChatMessage = {
+      id: 'u_' + Date.now(),
+      message,
+      messageType: 'user',
+      timestamp: new Date().toISOString()
+    };
+    this.chatHistory = [...this.chatHistory, userMsg];
+
+    // Placeholder assistant message we will fill incrementally
+    const assistantMsg: ChatMessage = {
+      id: 'a_' + Date.now(),
+      message: '',
+      messageType: 'assistant',
+      timestamp: new Date().toISOString()
+    };
+    this.chatHistory = [...this.chatHistory, assistantMsg];
+
+    // Stream tokens
+    this.aiService.sendMessageStream(message).subscribe({
+      next: (token) => {
+        assistantMsg.message += (assistantMsg.message ? ' ' : '') + token;
       },
-      error: (error) => {
-        this.error = error.message || 'Failed to send message. Please try again.';
-        // No auto-scrolling - let users control scrolling manually
+      error: (err) => {
+        assistantMsg.message = '[Error] ' + (err.message || 'stream failed');
+        this.error = err.message || 'Failed to stream response.';
+        this.isLoading = false;
+      },
+      complete: () => {
+        // trigger change detection by replacing array
+        this.chatHistory = [...this.chatHistory];
+        this.isLoading = false;
       }
     });
   }
@@ -140,7 +157,7 @@ export class AIChatbotComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   getMessageTime(timestamp: string | undefined): string {
     if (!timestamp) return '';
-    
+
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
@@ -167,7 +184,7 @@ export class AIChatbotComponent implements OnInit, OnDestroy, AfterViewChecked {
       const lastUserMessage = [...this.chatHistory]
         .reverse()
         .find(msg => msg.messageType === 'user');
-      
+
       if (lastUserMessage) {
         this.currentMessage = lastUserMessage.message;
         this.sendMessage();
@@ -203,14 +220,14 @@ export class AIChatbotComponent implements OnInit, OnDestroy, AfterViewChecked {
           `• Model: ${status.gemma_config?.model || 'Not configured'}\n` +
           `• API Key: ${status.gemma_config?.apiKeyConfigured ? 'Configured' : 'Missing'}\n` +
           `• Fallback Enabled: ${status.fallback_enabled ? 'Yes' : 'No'}`;
-          
+
         const statusMessage: ChatMessage = {
           message: statusText,
           messageType: 'system',
           timestamp: new Date().toISOString(),
           category: 'status'
         };
-        
+
         this.chatHistory = [...this.chatHistory, statusMessage];
         // No auto-scrolling - let users control scrolling manually
       },
@@ -219,4 +236,15 @@ export class AIChatbotComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
   }
-} 
+
+  @HostListener('window:openChatbot', ['$event'])
+  onOpenChatbot(event: Event): void {
+    this.isOpen = true;
+    this.isMinimized = false;
+    setTimeout(() => {
+      if (this.messageInput) {
+        this.messageInput.nativeElement.focus();
+      }
+    }, 100);
+  }
+}

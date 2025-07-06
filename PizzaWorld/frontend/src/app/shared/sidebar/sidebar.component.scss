@@ -306,6 +306,13 @@
   }
 }
 
+/* Mobile-specific profile elevation */
+@media (max-width: 1024px) {
+  .mobile-profile-elevated {
+    margin-bottom: 2.5rem; /* 2.5em elevation */
+  }
+}
+
 /* Smooth transitions for all interactive elements */
 .sidebar * {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);

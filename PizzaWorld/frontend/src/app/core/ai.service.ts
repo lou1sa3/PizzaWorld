@@ -61,20 +61,17 @@ export interface AnalysisResponse {
 })
 export class AIService {
   private readonly baseUrl = '/api/ai';
-  
+
   // Chat state management
   private currentSessionId: string | null = null;
   private chatHistorySubject = new BehaviorSubject<ChatMessage[]>([]);
   public chatHistory$ = this.chatHistorySubject.asObservable();
-  
+
   // Insights state management
   private insightsSubject = new BehaviorSubject<AIInsight[]>([]);
   public insights$ = this.insightsSubject.asObservable();
-  
+
   // Loading states
-  private chatLoadingSubject = new BehaviorSubject<boolean>(false);
-  public chatLoading$ = this.chatLoadingSubject.asObservable();
-  
   private insightsLoadingSubject = new BehaviorSubject<boolean>(false);
   public insightsLoading$ = this.insightsLoadingSubject.asObservable();
 
@@ -100,8 +97,6 @@ export class AIService {
    * Send a chat message to the AI assistant
    */
   sendMessage(message: string, context?: string): Observable<ChatMessage> {
-    this.chatLoadingSubject.next(true);
-    
     const request = {
       sessionId: this.currentSessionId,
       message: message,
@@ -123,17 +118,74 @@ export class AIService {
       catchError(error => {
         console.error('Error sending chat message:', error);
         return throwError(() => new Error('Failed to send message. Please try again.'));
-      }),
-      // Always stop loading regardless of success/failure
-      map(result => {
-        this.chatLoadingSubject.next(false);
-        return result;
-      }),
-      catchError(error => {
-        this.chatLoadingSubject.next(false);
-        return throwError(() => error);
       })
     );
+  }
+
+  /**
+   * Send a chat message and receive streaming tokens via text/event-stream.
+   */
+  sendMessageStream(message: string, context?: string): Observable<string> {
+    const token = localStorage.getItem('authToken');
+
+    const requestBody = {
+      sessionId: this.currentSessionId,
+      message,
+      context
+    };
+
+    const headers: any = {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream'
+    };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const url = `${this.baseUrl}/chat/stream`;
+
+    return new Observable<string>((observer) => {
+      fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(requestBody)
+      }).then(response => {
+        if (!response.ok || !response.body) {
+          observer.error(new Error('Streaming request failed'));
+          return;
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+
+        const read = () => {
+          reader.read().then(({ value, done }) => {
+            if (done) {
+              observer.complete();
+              return;
+            }
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            lines.forEach((line) => {
+              line = line.trim();
+              if (!line || !line.startsWith('data:')) return;
+              const data = line.slice(5).trim();
+              if (data === '[DONE]') {
+                observer.complete();
+              } else {
+                observer.next(data);
+              }
+            });
+
+            read();
+          }).catch(err => { observer.error(err); });
+        };
+
+        read();
+      }).catch(err => { observer.error(err); });
+    });
   }
 
   /**
@@ -180,7 +232,7 @@ export class AIService {
    */
   getInsights(): Observable<AIInsight[]> {
     this.insightsLoadingSubject.next(true);
-    
+
     return this.http.get<InsightsResponse>(`${this.baseUrl}/insights`, {
       headers: this.getAuthHeaders()
     }).pipe(
@@ -313,10 +365,10 @@ export class AIService {
    */
   formatMessage(message: string): string {
     if (!message) return '';
-    
+
     // Clean up any JSON formatting that might have leaked through
     let cleanMessage = message;
-    
+
     // Remove JSON wrapper if present
     if (cleanMessage.includes('"response":')) {
       try {
@@ -328,20 +380,20 @@ export class AIService {
         // If JSON parsing fails, continue with original message
       }
     }
-    
+
     // Unescape JSON escaped characters
     cleanMessage = cleanMessage
       .replace(/\\n/g, '\n')
       .replace(/\\"/g, '"')
       .replace(/\\t/g, '\t')
       .replace(/\\\\/g, '\\');
-    
+
     // Convert markdown-like formatting to HTML and style currency values green
     return cleanMessage
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      // Make big currency values green (e.g., $50,211,527.85)
-      .replace(/\$([0-9,]+(?:\.[0-9]{2})?)/g, '<span style="color: #10b981; font-weight: 600;">$$1</span>')
+      // Make big currency values green (e.g., $50.211,52 or $50,211.52)
+      .replace(/\$([0-9.,]+)/g, '<span style="color: #10b981; font-weight: 600;">$$$1</span>')
       .replace(/\n/g, '<br>')
       .replace(/•/g, '&bull;')
       .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
@@ -373,4 +425,4 @@ export class AIService {
       default: return '💡';
     }
   }
-} 
+}
