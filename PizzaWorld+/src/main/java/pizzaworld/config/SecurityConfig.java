@@ -60,7 +60,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT = stateless
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/login", "/api/register", "/api/send-support-email").permitAll() // Explicitly permit login/register and contact form
+                        .requestMatchers("/api/login", "/api/register", "/api/send-support-email", "/api/ai/health", "/api/ai/config").permitAll() // Explicitly permit login/register, contact form, and AI health/config
                         .requestMatchers("/api/**").authenticated() // Secure all other API endpoints
                         .anyRequest().permitAll()) // Permit all other requests (for frontend assets)
                 .httpBasic(AbstractHttpConfigurer::disable)

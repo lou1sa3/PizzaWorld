@@ -137,23 +137,7 @@ export class DashboardComponent implements OnInit {
     this.loadAvailableYears();
     // loadDashboardData() will be called from loadAvailableYears() after years are loaded
 
-    // Demo notification on dashboard load
-    setTimeout(() => {
-      this.notificationService.success(
-        'Enhanced Dashboard Ready',
-        'Welcome to PizzaWorld+ Analytics! Now with advanced caching, dark mode, and real-time notifications.',
-        { duration: 5000 }
-      );
-    }, 1000);
-
-    // Demo additional notifications to showcase dark mode
-    setTimeout(() => {
-      this.notificationService.info(
-        'Dark Mode Available',
-        'Toggle dark mode using the switch next to PizzaWorld+ in the sidebar!',
-        { duration: 4000 }
-      );
-    }, 3000);
+    // Removed automatic demo notifications - notifications only for theme changes now
   }
 
   private getAuthHeaders(): HttpHeaders {
@@ -1045,17 +1029,12 @@ export class DashboardComponent implements OnInit {
   }
 
   refreshData(): void {
-    this.notificationService.info('Refreshing Data', 'Loading latest dashboard data...');
-
+    // Removed refresh notifications - only theme notifications remain
+    
     this.loadDashboardData();
     if (this.showAnalytics) {
       this.loadAnalyticsData();
     }
-
-    // Show success notification after a delay
-    setTimeout(() => {
-      this.notificationService.toast.success('Dashboard data refreshed successfully!');
-    }, 2000);
   }
 
   // =================================================================

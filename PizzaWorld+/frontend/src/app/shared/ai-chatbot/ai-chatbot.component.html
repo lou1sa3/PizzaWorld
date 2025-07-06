@@ -1,0 +1,216 @@
+<!-- AI Chatbot Component -->
+<div class="ai-chatbot-container">
+  <!-- Chatbot Toggle Button -->
+  <button 
+    *ngIf="!isOpen"
+    (click)="toggleChatbot()"
+    class="chatbot-toggle-btn"
+    [attr.aria-label]="getAriaLabel()"
+    type="button">
+    <span class="ai-icon">🤖</span>
+    <span class="pulse-ring"></span>
+    <span class="toggle-text">AI Assistant</span>
+  </button>
+
+  <!-- Chatbot Window -->
+  <div 
+    *ngIf="isOpen" 
+    class="chatbot-window"
+    [class.minimized]="isMinimized"
+    role="dialog"
+    aria-labelledby="chatbot-title"
+    aria-describedby="chatbot-description">
+
+    <!-- Header -->
+    <div class="chatbot-header">
+      <div class="header-content">
+        <button 
+          class="ai-avatar clickable-avatar"
+          (click)="testGoogleAI()"
+          [disabled]="isLoading"
+          aria-label="Test Google AI"
+          title="Click to test Google AI connection"
+          type="button">
+          🤖
+        </button>
+        <div class="header-text">
+          <h3 id="chatbot-title" class="title">pizzi.ai	</h3>
+          <p id="chatbot-description" class="status" [attr.aria-live]="isLoading ? 'polite' : 'off'">
+            {{ getChatbotStatusText() }}
+          </p>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <button 
+          *ngIf="!isMinimized"
+          (click)="minimizeChatbot()"
+          class="action-btn minimize-btn"
+          aria-label="Minimize chat"
+          type="button">
+          <span class="icon">−</span>
+        </button>
+        <button 
+          *ngIf="isMinimized"
+          (click)="maximizeChatbot()"
+          class="action-btn maximize-btn"
+          aria-label="Maximize chat"
+          type="button">
+          <span class="icon">□</span>
+        </button>
+        <button 
+          (click)="toggleChatbot()"
+          class="action-btn close-btn"
+          aria-label="Close chat"
+          type="button">
+          <span class="icon">×</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Chat Content -->
+    <div *ngIf="!isMinimized" class="chatbot-content">
+      
+      <!-- Welcome Message -->
+      <div *ngIf="chatHistory.length === 0" class="welcome-section">
+        <div class="welcome-message">
+          <h4>👋 Welcome to pizzi.ai!</h4>
+          <p>I'm here to help you with analytics, insights, and support. Try asking me:</p>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <button 
+            *ngFor="let action of quickActions"
+            (click)="sendQuickAction(action.text)"
+            class="quick-action-btn"
+            type="button">
+            <span class="action-icon">{{ action.icon }}</span>
+            <span class="action-text">{{ action.text }}</span>
+          </button>
+        </div>
+
+        <!-- Test Actions -->
+        <div class="test-actions">
+          <h5 class="test-section-title">🧪 AI Diagnostics</h5>
+          <button 
+            *ngFor="let action of testActions"
+            (click)="handleTestAction(action.action)"
+            class="test-action-btn"
+            type="button">
+            <span class="action-icon">{{ action.icon }}</span>
+            <span class="action-text">{{ action.text }}</span>
+          </button>
+        </div>
+              </div>
+
+      <!-- Messages Container -->
+      <div 
+        #messagesContainer
+        class="messages-container"
+        role="log"
+        aria-label="Chat messages"
+        [class.has-messages]="chatHistory.length > 0">
+        
+        <div 
+          *ngFor="let message of chatHistory; trackBy: trackByMessageId"
+          class="message"
+          [class.user-message]="isUserMessage(message)"
+          [class.assistant-message]="isAssistantMessage(message)">
+          
+          <!-- User Message -->
+          <div *ngIf="isUserMessage(message)" class="user-message-content">
+            <div class="message-bubble user-bubble">
+              <div class="message-text">{{ message.message }}</div>
+              <div class="message-time">{{ getMessageTime(message.timestamp) }}</div>
+            </div>
+            <div class="message-avatar user-avatar">👤</div>
+          </div>
+
+          <!-- Assistant Message -->
+          <div *ngIf="isAssistantMessage(message)" class="assistant-message-content">
+            <div class="message-avatar assistant-avatar">🤖</div>
+            <div class="message-bubble assistant-bubble">
+              <div class="message-header">
+                <span class="category-icon">{{ getMessageCategoryIcon(message.category) }}</span>
+                <span class="assistant-label">pizzi.ai</span>
+              </div>
+              <div 
+                class="message-text"
+                [innerHTML]="formatMessage(message.message)">
+              </div>
+              <div class="message-time">{{ getMessageTime(message.timestamp) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div *ngIf="isLoading" class="message assistant-message">
+          <div class="assistant-message-content">
+            <div class="message-avatar assistant-avatar">🤖</div>
+            <div class="message-bubble assistant-bubble loading">
+              <div class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+      <!-- Error Message -->
+      <div *ngIf="error" class="error-section">
+        <div class="error-message">
+          <span class="error-icon">⚠️</span>
+          <span class="error-text">{{ error }}</span>
+          <button 
+            (click)="retryLastMessage()"
+            class="retry-btn"
+            type="button">
+            Try Again
+          </button>
+        </div>
+      </div>
+
+      <!-- Input Section -->
+      <div class="input-section">
+        <div class="input-container">
+          <textarea
+            #messageInput
+            [(ngModel)]="currentMessage"
+            (keydown)="onKeyPress($event)"
+            placeholder="Ask me anything!"
+            class="message-input"
+            rows="1"
+            [disabled]="isLoading"
+            aria-label="Type your message"
+            maxlength="1000"></textarea>
+          
+          <button 
+            (click)="sendMessage()"
+            [disabled]="!currentMessage.trim() || isLoading"
+            class="send-btn"
+            aria-label="Send message"
+            type="button">
+            <span *ngIf="!isLoading" class="send-icon">➤</span>
+            <span *ngIf="isLoading" class="loading-spinner"></span>
+          </button>
+        </div>
+        
+        <div class="input-footer">
+          <button 
+            *ngIf="chatHistory.length > 0"
+            (click)="clearChat()"
+            class="clear-btn"
+            type="button">
+            🗑️ Clear Chat
+          </button>
+          <span class="input-hint">Press Enter to send, Shift+Enter for new line</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

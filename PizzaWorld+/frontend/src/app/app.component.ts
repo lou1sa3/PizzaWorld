@@ -4,13 +4,14 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from './core/auth.service'; // Import AuthService
 import { KpiService } from './core/kpi.service'; // Import KpiService
 import { NotificationComponent } from './shared/notification/notification.component';
+import { AIChatbotComponent } from './shared/ai-chatbot/ai-chatbot.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  imports: [RouterOutlet, NotificationComponent, CommonModule] // Import RouterOutlet for routing
+  imports: [RouterOutlet, NotificationComponent, CommonModule, AIChatbotComponent] // Import RouterOutlet for routing
 })
 export class AppComponent {
   @ViewChild('mobileSidebarToggle', { static: false }) mobileSidebarToggle!: ElementRef<HTMLButtonElement>;
