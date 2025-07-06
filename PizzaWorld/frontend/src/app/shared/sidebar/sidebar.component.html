@@ -1,4 +1,4 @@
-<aside #sidebar class="sidebar fixed left-0 top-0 h-full w-64 shadow-2xl flex flex-col z-50 transition-all duration-300 ease-in-out"
+<aside #sidebar class="sidebar fixed left-0 top-0 h-full shadow-2xl flex flex-col z-50 transition-all duration-300 ease-in-out w-64 sm:w-72 md:w-80 lg:w-64"
   [ngClass]="{
     'bg-gradient-to-br from-orange-600 via-orange-500 to-orange-600': !isDarkMode
   }"
@@ -9,42 +9,42 @@
   } : {}">
 
   <!-- Header Section -->
-  <div class="p-6 border-b border-orange-400/30">
+  <div class="p-4 sm:p-6 border-b border-orange-400/30">
     <div class="flex items-center justify-between">
-      <div class="brand-section flex items-center gap-3">
-        <div>
-          <h2 class="text-2xl font-bold text-white">
+      <div class="brand-section flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+        <div class="min-w-0 flex-1">
+          <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-white truncate">
             PizzaWorld<span class="text-orange-200">+</span>
           </h2>
-          <p class="text-orange-100 text-sm font-medium mt-1">Analytics Dashboard</p>
+          <p class="text-orange-100 text-xs sm:text-sm font-medium mt-1 truncate">Analytics Dashboard</p>
         </div>
 
         <!-- Dark Mode Toggle -->
         <button
           (click)="toggleTheme()"
-          class="p-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200 hidden lg:flex"
+          class="p-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200 hidden lg:flex flex-shrink-0"
           [attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
           title="Toggle theme">
-          <svg *ngIf="!isDarkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg *ngIf="!isDarkMode" class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
           </svg>
-          <svg *ngIf="isDarkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg *ngIf="isDarkMode" class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
           </svg>
         </button>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
         <!-- Dark Mode Toggle Mobile -->
         <button
           (click)="toggleTheme()"
           class="lg:hidden p-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
           [attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
           title="Toggle theme">
-          <svg *ngIf="!isDarkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg *ngIf="!isDarkMode" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
           </svg>
-          <svg *ngIf="isDarkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg *ngIf="isDarkMode" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
           </svg>
         </button>
@@ -55,7 +55,7 @@
           class="lg:hidden p-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
           aria-label="Log out"
           title="Log out">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
           </svg>
         </button>
@@ -65,7 +65,7 @@
           class="lg:hidden p-2 rounded-lg text-white hover:bg-white/10 transition-colors duration-200"
           (click)="closeMobileSidebar()"
           aria-label="Close navigation menu">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
@@ -74,10 +74,10 @@
   </div>
 
   <!-- Search Section -->
-  <div class="p-4">
+  <div class="p-3 sm:p-4">
     <div class="relative">
       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <svg class="w-5 h-5 text-orange-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-orange-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
       </div>
@@ -89,7 +89,7 @@
         (focus)="onSearchFocus()"
         (blur)="onSearchBlur()"
         (keydown)="onSearchKeyDown($event)"
-        class="w-full pl-10 pr-4 py-2 bg-white/10 border border-orange-400/30 rounded-lg text-white placeholder-orange-200 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/40 transition-all duration-200"
+        class="w-full pl-8 sm:pl-10 pr-4 py-2 bg-white/10 border border-orange-400/30 rounded-lg text-white placeholder-orange-200 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/40 transition-all duration-200 text-sm"
         placeholder=""
         aria-label="Search dashboard"
         autocomplete="off" />
@@ -100,7 +100,7 @@
         (click)="clearSearch()"
         class="absolute inset-y-0 right-0 pr-3 flex items-center text-orange-200 hover:text-white transition-colors duration-200"
         aria-label="Clear search">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
       </button>
@@ -124,15 +124,15 @@
             class="flex items-center px-3 py-2 hover:bg-orange-50 rounded-lg cursor-pointer transition-colors duration-150">
 
             <!-- Icon -->
-            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-              <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="result.icon"></path>
               </svg>
             </div>
 
             <!-- Content -->
-            <div class="ml-3 flex-1 min-w-0">
-              <div class="text-sm font-medium text-gray-900">
+            <div class="ml-2 sm:ml-3 flex-1 min-w-0">
+              <div class="text-sm font-medium text-gray-900 truncate">
                 {{ result.title }}
               </div>
               <div class="text-xs text-gray-500 truncate">
@@ -141,9 +141,9 @@
             </div>
 
             <!-- Category badge -->
-            <div class="flex-shrink-0 ml-2">
+            <div class="flex-shrink-0 ml-1 sm:ml-2">
               <span
-                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                class="inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-xs font-medium"
                 [class.bg-blue-100]="result.category === 'page'"
                 [class.text-blue-800]="result.category === 'page'"
                 [class.bg-green-100]="result.category === 'action'"
@@ -185,22 +185,22 @@
   </div>
 
   <!-- Navigation Section -->
-  <nav class="flex-1 px-4 pb-4">
-    <ul class="space-y-2">
+  <nav class="flex-1 px-3 sm:px-4 pb-4 overflow-y-auto">
+    <ul class="space-y-1 sm:space-y-2">
       <!-- Dashboard -->
       <li>
         <a
           routerLink="/dashboard"
           routerLinkActive="active-nav-link"
           (click)="closeMobileSidebar()"
-          class="flex items-center px-4 py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
-          <div class="flex items-center justify-center w-6 h-6 mr-3">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="flex items-center px-3 sm:px-4 py-2 sm:py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
+          <div class="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 flex-shrink-0">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
             </svg>
           </div>
-          <span class="font-medium">Dashboard</span>
-          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+          <span class="font-medium text-sm sm:text-base truncate">Dashboard</span>
+          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0"></div>
         </a>
       </li>
 
@@ -210,14 +210,14 @@
           routerLink="/stores"
           routerLinkActive="active-nav-link"
           (click)="closeMobileSidebar()"
-          class="flex items-center px-4 py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
-          <div class="flex items-center justify-center w-6 h-6 mr-3">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="flex items-center px-3 sm:px-4 py-2 sm:py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
+          <div class="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 flex-shrink-0">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
             </svg>
           </div>
-          <span class="font-medium">Stores</span>
-          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+          <span class="font-medium text-sm sm:text-base truncate">Stores</span>
+          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0"></div>
         </a>
       </li>
 
@@ -227,14 +227,14 @@
           routerLink="/products"
           routerLinkActive="active-nav-link"
           (click)="closeMobileSidebar()"
-          class="flex items-center px-4 py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
-          <div class="flex items-center justify-center w-6 h-6 mr-3">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="flex items-center px-3 sm:px-4 py-2 sm:py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
+          <div class="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 flex-shrink-0">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
             </svg>
           </div>
-          <span class="font-medium">Products</span>
-          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+          <span class="font-medium text-sm sm:text-base truncate">Products</span>
+          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0"></div>
         </a>
       </li>
 
@@ -246,14 +246,14 @@
           routerLink="/orders"
           routerLinkActive="active-nav-link"
           (click)="closeMobileSidebar()"
-          class="flex items-center px-4 py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
-          <div class="flex items-center justify-center w-6 h-6 mr-3">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="flex items-center px-3 sm:px-4 py-2 sm:py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
+          <div class="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 flex-shrink-0">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
           </div>
-          <span class="font-medium">Orders</span>
-          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+          <span class="font-medium text-sm sm:text-base truncate">Orders</span>
+          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0"></div>
         </a>
       </li>
 
@@ -263,14 +263,14 @@
           routerLink="/customer-analytics"
           routerLinkActive="active-nav-link"
           (click)="closeMobileSidebar()"
-          class="flex items-center px-4 py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
-          <div class="flex items-center justify-center w-6 h-6 mr-3">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="flex items-center px-3 sm:px-4 py-2 sm:py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
+          <div class="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 flex-shrink-0">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
             </svg>
           </div>
-          <span class="font-medium">Customer Analytics</span>
-          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+          <span class="font-medium text-sm sm:text-base truncate">Customer Analytics</span>
+          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0"></div>
         </a>
       </li>
 
@@ -280,128 +280,128 @@
           routerLink="/delivery-metrics"
           routerLinkActive="active-nav-link"
           (click)="closeMobileSidebar()"
-          class="flex items-center px-4 py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
-          <div class="flex items-center justify-center w-6 h-6 mr-3">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="flex items-center px-3 sm:px-4 py-2 sm:py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
+          <div class="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 flex-shrink-0">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
             </svg>
           </div>
-          <span class="font-medium">Delivery Metrics</span>
-          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+          <span class="font-medium text-sm sm:text-base truncate">Delivery Metrics</span>
+          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0"></div>
         </a>
       </li>
     </ul>
 
     <!-- Divider -->
-    <div class="my-4 border-t border-orange-400/30"></div>
+    <div class="my-3 sm:my-4 border-t border-orange-400/30"></div>
 
     <!-- Support Section -->
-    <ul class="space-y-2">
+    <ul class="space-y-1 sm:space-y-2">
       <!-- Contact Support -->
       <li>
         <a
           routerLink="/contact-support"
           routerLinkActive="active-nav-link"
           (click)="closeMobileSidebar()"
-          class="flex items-center px-4 py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
-          <div class="flex items-center justify-center w-6 h-6 mr-3">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="flex items-center px-3 sm:px-4 py-2 sm:py-3 text-orange-100 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group nav-link">
+          <div class="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 flex-shrink-0">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path>
             </svg>
           </div>
-          <span class="font-medium">Contact Support</span>
-          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+          <span class="font-medium text-sm sm:text-base truncate">Contact Support</span>
+          <div class="ml-auto w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0"></div>
         </a>
       </li>
     </ul>
 
     <!-- Quick Stats Section -->
-    <div class="mt-8 p-4 bg-white/5 rounded-lg border border-white/10">
-      <h3 class="text-white font-semibold text-sm mb-3">Quick Stats</h3>
+    <div class="mt-6 sm:mt-8 p-3 sm:p-4 bg-white/5 rounded-lg border border-white/10">
+      <h3 class="text-white font-semibold text-sm mb-2 sm:mb-3">Quick Stats</h3>
       <div class="space-y-2">
         <!-- Active Stores -->
         <div class="flex justify-between text-xs">
-          <span class="text-orange-200">Active Stores</span>
-          <span class="text-white font-medium" *ngIf="!quickStatsLoading && !quickStatsError">{{ formatCompactNumber(quickStats.totalStores) }}</span>
-          <span class="text-orange-300 font-medium" *ngIf="quickStatsLoading">Loading...</span>
-          <span class="text-red-300 font-medium" *ngIf="quickStatsError">Error</span>
+          <span class="text-orange-200 truncate">Active Stores</span>
+          <span class="text-white font-medium ml-2 flex-shrink-0" *ngIf="!quickStatsLoading && !quickStatsError">{{ formatCompactNumber(quickStats.totalStores) }}</span>
+          <span class="text-orange-300 font-medium ml-2 flex-shrink-0" *ngIf="quickStatsLoading">Loading...</span>
+          <span class="text-red-300 font-medium ml-2 flex-shrink-0" *ngIf="quickStatsError">Error</span>
         </div>
 
         <!-- Total Orders -->
         <div class="flex justify-between text-xs">
-          <span class="text-orange-200">Total Orders</span>
-          <span class="text-white font-medium" *ngIf="!quickStatsLoading && !quickStatsError">{{ formatCompactNumber(quickStats.totalOrders) }}</span>
-          <span class="text-orange-300 font-medium" *ngIf="quickStatsLoading">Loading...</span>
-          <span class="text-red-300 font-medium" *ngIf="quickStatsError">Error</span>
+          <span class="text-orange-200 truncate">Total Orders</span>
+          <span class="text-white font-medium ml-2 flex-shrink-0" *ngIf="!quickStatsLoading && !quickStatsError">{{ formatCompactNumber(quickStats.totalOrders) }}</span>
+          <span class="text-orange-300 font-medium ml-2 flex-shrink-0" *ngIf="quickStatsLoading">Loading...</span>
+          <span class="text-red-300 font-medium ml-2 flex-shrink-0" *ngIf="quickStatsError">Error</span>
         </div>
 
         <!-- Revenue -->
         <div class="flex justify-between text-xs">
-          <span class="text-orange-200">Revenue</span>
-          <span class="text-white font-medium" *ngIf="!quickStatsLoading && !quickStatsError">{{ formatCompactCurrency(quickStats.totalRevenue) }}</span>
-          <span class="text-orange-300 font-medium" *ngIf="quickStatsLoading">Loading...</span>
-          <span class="text-red-300 font-medium" *ngIf="quickStatsError">Error</span>
+          <span class="text-orange-200 truncate">Revenue</span>
+          <span class="text-white font-medium ml-2 flex-shrink-0" *ngIf="!quickStatsLoading && !quickStatsError">{{ formatCompactCurrency(quickStats.totalRevenue) }}</span>
+          <span class="text-orange-300 font-medium ml-2 flex-shrink-0" *ngIf="quickStatsLoading">Loading...</span>
+          <span class="text-red-300 font-medium ml-2 flex-shrink-0" *ngIf="quickStatsError">Error</span>
         </div>
 
         <!-- Total Customers -->
         <div class="flex justify-between text-xs">
-          <span class="text-orange-200">Total Customers</span>
-          <span class="text-white font-medium" *ngIf="!quickStatsLoading && !quickStatsError">{{ formatCompactNumber(quickStats.totalCustomers) }}</span>
-          <span class="text-orange-300 font-medium" *ngIf="quickStatsLoading">Loading...</span>
-          <span class="text-red-300 font-medium" *ngIf="quickStatsError">Error</span>
+          <span class="text-orange-200 truncate">Total Customers</span>
+          <span class="text-white font-medium ml-2 flex-shrink-0" *ngIf="!quickStatsLoading && !quickStatsError">{{ formatCompactNumber(quickStats.totalCustomers) }}</span>
+          <span class="text-orange-300 font-medium ml-2 flex-shrink-0" *ngIf="quickStatsLoading">Loading...</span>
+          <span class="text-red-300 font-medium ml-2 flex-shrink-0" *ngIf="quickStatsError">Error</span>
         </div>
       </div>
     </div>
   </nav>
 
     <!-- AI Chatbot Icon - All Screen Sizes -->
-  <div class="p-4 border-t border-orange-400/30">
+  <div class="p-3 sm:p-4 border-t border-orange-400/30">
     <button
       (click)="openChatbot()"
-      class="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+      class="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
       aria-label="Open AI Assistant">
-      <div class="w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center">
-        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
         </svg>
       </div>
-      <span class="font-medium">AI Assistant</span>
+      <span class="font-medium text-sm sm:text-base truncate">AI Assistant</span>
     </button>
   </div>
 
   <!-- Profile Section -->
-  <div class="p-4 border-t border-orange-400/30 mobile-profile-elevated">
+  <div class="p-3 sm:p-4 border-t border-orange-400/30 mobile-profile-elevated">
     <div class="flex items-center justify-between">
       <a
         routerLink="/profile"
         (click)="closeMobileSidebar()"
-        class="flex items-center space-x-3 text-white hover:bg-white/10 rounded-lg p-2 transition-all duration-200 flex-1"
+        class="flex items-center space-x-2 sm:space-x-3 text-white hover:bg-white/10 rounded-lg p-2 transition-all duration-200 flex-1 min-w-0"
         aria-label="View profile">
-        <div class="relative">
-          <div class="w-10 h-10 bg-gradient-to-r from-orange-300 to-orange-400 rounded-full flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="relative flex-shrink-0">
+          <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-orange-300 to-orange-400 rounded-full flex items-center justify-center">
+            <svg class="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
             </svg>
           </div>
-          <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-orange-600 rounded-full"></div>
+          <div class="absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-400 border-2 border-orange-600 rounded-full"></div>
         </div>
-        <div class="flex-1" *ngIf="user$ | async as u; else loadingProfile">
-          <div class="text-sm font-medium text-white">{{ u?.username || 'Loading...' }}</div>
-          <div class="text-xs text-orange-200">{{ u?.role || 'User' }}</div>
+        <div class="flex-1 min-w-0" *ngIf="user$ | async as u; else loadingProfile">
+          <div class="text-sm font-medium text-white truncate">{{ u?.username || 'Loading...' }}</div>
+          <div class="text-xs text-orange-200 truncate">{{ u?.role || 'User' }}</div>
         </div>
         <ng-template #loadingProfile>
-          <div class="flex-1">
-            <div class="text-sm font-medium text-white">Loading...</div>
-            <div class="text-xs text-orange-200">Please wait</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium text-white truncate">Loading...</div>
+            <div class="text-xs text-orange-200 truncate">Please wait</div>
           </div>
         </ng-template>
       </a>
 
       <button
-        class="hidden lg:block p-2 text-orange-200 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 ml-2"
+        class="hidden lg:block p-2 text-orange-200 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 ml-2 flex-shrink-0"
         (click)="logout()"
         aria-label="Log out">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
         </svg>
       </button>

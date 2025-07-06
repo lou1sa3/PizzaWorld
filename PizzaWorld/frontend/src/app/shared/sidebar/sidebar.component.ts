@@ -148,6 +148,15 @@ export class SidebarComponent implements OnInit, OnDestroy {
     if (this.isMobile) {
       this.isOpen = false;
       this.updateMobileSidebar();
+    } else {
+      // On desktop, ensure sidebar is properly positioned
+      const sidebar = this.sidebar.nativeElement;
+      sidebar.classList.remove('mobile-open');
+      const overlay = document.getElementById('sidebar-overlay');
+      if (overlay) {
+        overlay.classList.remove('mobile-overlay-active');
+      }
+      this.isOpen = false;
     }
   }
 

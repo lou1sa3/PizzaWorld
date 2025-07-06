@@ -44,12 +44,13 @@
   transform: translateX(-100%);
 }
 
-/* Mobile responsiveness */
+/* Enhanced responsive design for mobile */
 @media (max-width: 1024px) {
   .sidebar {
     transform: translateX(-100%);
     width: 100vw;
-    max-width: 320px;
+    max-width: min(85vw, 320px);
+    min-width: 280px;
     z-index: 50;
   }
 
@@ -60,6 +61,42 @@
   #sidebar-overlay.mobile-overlay-active {
     opacity: 1;
     pointer-events: all;
+  }
+}
+
+/* Extra small screens (phones in portrait) */
+@media (max-width: 480px) {
+  .sidebar {
+    max-width: 90vw;
+    min-width: 260px;
+  }
+}
+
+/* Small screens (small tablets and large phones) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .sidebar {
+    max-width: 320px;
+    min-width: 300px;
+  }
+}
+
+/* Medium screens (tablets) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar {
+    max-width: 340px;
+    min-width: 320px;
+  }
+}
+
+/* Prevent horizontal scrolling on small screens */
+@media (max-width: 1024px) {
+  .sidebar {
+    overflow-x: hidden;
+  }
+  
+  .sidebar * {
+    max-width: 100%;
+    word-wrap: break-word;
   }
 }
 
@@ -299,17 +336,23 @@
   }
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .sidebar {
-    width: 280px;
-  }
-}
-
-/* Mobile-specific profile elevation */
+/* Enhanced mobile-specific profile elevation */
 @media (max-width: 1024px) {
   .mobile-profile-elevated {
-    margin-bottom: 2.5rem; /* 2.5em elevation */
+    margin-bottom: 2.5rem;
+    position: relative;
+  }
+  
+  /* Ensure profile section is always visible */
+  .mobile-profile-elevated::before {
+    content: '';
+    position: absolute;
+    bottom: -2.5rem;
+    left: 0;
+    right: 0;
+    height: 2.5rem;
+    background: transparent;
+    pointer-events: none;
   }
 }
 
@@ -345,6 +388,52 @@
   .sidebar {
     display: none;
   }
+}
+
+/* Responsive font scaling for better readability */
+@media (max-width: 480px) {
+  .sidebar {
+    font-size: 0.875rem; /* 14px */
+  }
+  
+  .sidebar h2 {
+    font-size: 1.125rem; /* 18px */
+  }
+  
+  .sidebar .text-xs {
+    font-size: 0.75rem; /* 12px */
+  }
+  
+  .sidebar .text-sm {
+    font-size: 0.8125rem; /* 13px */
+  }
+}
+
+/* Ensure icons are properly sized and don't overflow */
+.sidebar svg {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+/* Prevent text overflow in navigation items */
+.sidebar .nav-link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ensure proper spacing in flexbox layouts */
+.sidebar .flex {
+  min-width: 0;
+}
+
+.sidebar .flex-1 {
+  min-width: 0;
+  flex: 1 1 0%;
+}
+
+.sidebar .flex-shrink-0 {
+  flex-shrink: 0;
 }
 
 /* Note: Individual page components should use 'lg:ml-64' class for sidebar spacing */

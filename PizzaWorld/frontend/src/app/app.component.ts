@@ -35,8 +35,12 @@ export class AppComponent {
     if (sidebar) {
       if (this.isMobileSidebarOpen) {
         sidebar.classList.add('mobile-open');
+        // Ensure proper scrolling behavior
+        document.body.style.overflow = 'hidden';
       } else {
         sidebar.classList.remove('mobile-open');
+        // Restore scrolling
+        document.body.style.overflow = '';
       }
     }
 
@@ -64,6 +68,8 @@ export class AppComponent {
       if (overlay) {
         overlay.classList.remove('mobile-overlay-active');
       }
+      // Restore body scrolling
+      document.body.style.overflow = '';
     }
   }
 }
