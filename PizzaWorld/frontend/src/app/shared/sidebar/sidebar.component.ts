@@ -197,7 +197,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }
   }
 
-  openMobileChatbot(): void {
+  openChatbot(): void {
     // Trigger the regular chatbot to open by dispatching a custom event
     const chatbotEvent = new CustomEvent('openChatbot');
     window.dispatchEvent(chatbotEvent);

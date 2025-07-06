@@ -5,66 +5,16 @@
   z-index: 1000;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
-  /* Hide toggle button on mobile - it's in sidebar instead */
-  @media (max-width: 1024px) {
-    .chatbot-toggle-btn {
-      display: none;
-    }
+  /* Hide toggle button on desktop - it's in sidebar instead */
+  /* Also hide on mobile - it's in sidebar instead */
+  .chatbot-toggle-btn {
+    display: none;
   }
 }
 
-/* Toggle Button */
+/* Toggle Button - Only show as absolute fallback for very small screens */
 .chatbot-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #FF6B35, #FF8C42);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 56px;
-  height: 56px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(255, 107, 53, 0.4);
-  }
-
-  .ai-icon {
-    font-size: 24px;
-    position: relative;
-    z-index: 2;
-  }
-
-  .pulse-ring {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 40px;
-    height: 40px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-  }
-}
-
-@keyframes pulse {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.5);
-    opacity: 0;
-  }
+  display: none; /* Hidden by default, now using sidebar for all screen sizes */
 }
 
 /* Chatbot Window */
@@ -93,6 +43,145 @@
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+}
+
+/* Dark Mode Header Override */
+html.dark .chatbot-header,
+body[data-theme="dark"] .chatbot-header,
+.dark .ai-chatbot-container .chatbot-header,
+:host(.dark) .chatbot-header,
+app-ai-chatbot .chatbot-header {
+  background: linear-gradient(135deg, #2b223d, #100025) !important; /* Custom dark gradient */
+}
+
+/* Dark Mode Chatbot Window */
+html.dark .chatbot-window,
+body[data-theme="dark"] .chatbot-window,
+.dark .ai-chatbot-container .chatbot-window {
+  background: #1a1a1a !important;
+  border: 1px solid #374151 !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Dark Mode Message Bubbles */
+html.dark .assistant-bubble,
+body[data-theme="dark"] .assistant-bubble,
+.dark .ai-chatbot-container .assistant-bubble {
+  background: #2d3748 !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #4a5568 !important;
+}
+
+/* Dark Mode Input Section */
+html.dark .input-container,
+body[data-theme="dark"] .input-container,
+.dark .ai-chatbot-container .input-container {
+  background: #2d3748 !important;
+  border: 1px solid #4a5568 !important;
+}
+
+html.dark .message-input,
+body[data-theme="dark"] .message-input,
+.dark .ai-chatbot-container .message-input {
+  background: #2d3748 !important;
+  color: #e2e8f0 !important;
+  border: none !important;
+}
+
+html.dark .message-input::placeholder,
+body[data-theme="dark"] .message-input::placeholder,
+.dark .ai-chatbot-container .message-input::placeholder {
+  color: #a0aec0 !important;
+}
+
+/* Dark Mode Send Button */
+html.dark .send-btn,
+body[data-theme="dark"] .send-btn,
+.dark .ai-chatbot-container .send-btn {
+  background: linear-gradient(135deg, #2b223d, #100025) !important;
+  color: white !important;
+}
+
+html.dark .send-btn:hover,
+body[data-theme="dark"] .send-btn:hover,
+.dark .ai-chatbot-container .send-btn:hover {
+  background: linear-gradient(135deg, #3c2f52, #1a0838) !important;
+}
+
+/* Dark Mode Empty State */
+html.dark .empty-state-content,
+body[data-theme="dark"] .empty-state-content,
+.dark .ai-chatbot-container .empty-state-content {
+  color: #a0aec0 !important;
+}
+
+/* Dark Mode Scrollbar */
+html.dark .messages-container::-webkit-scrollbar-track,
+body[data-theme="dark"] .messages-container::-webkit-scrollbar-track,
+.dark .ai-chatbot-container .messages-container::-webkit-scrollbar-track {
+  background: #2d3748 !important;
+}
+
+html.dark .messages-container::-webkit-scrollbar-thumb,
+body[data-theme="dark"] .messages-container::-webkit-scrollbar-thumb,
+.dark .ai-chatbot-container .messages-container::-webkit-scrollbar-thumb {
+  background: #4a5568 !important;
+}
+
+html.dark .messages-container::-webkit-scrollbar-thumb:hover,
+body[data-theme="dark"] .messages-container::-webkit-scrollbar-thumb:hover,
+.dark .ai-chatbot-container .messages-container::-webkit-scrollbar-thumb:hover {
+  background: #718096 !important;
+}
+
+/* Dark Mode Clear Button */
+html.dark .clear-btn,
+body[data-theme="dark"] .clear-btn,
+.dark .ai-chatbot-container .clear-btn {
+  color: #a0aec0 !important;
+}
+
+html.dark .clear-btn:hover,
+body[data-theme="dark"] .clear-btn:hover,
+.dark .ai-chatbot-container .clear-btn:hover {
+  color: #e2e8f0 !important;
+}
+
+/* Dark Mode Assistant Avatar */
+html.dark .assistant-avatar,
+body[data-theme="dark"] .assistant-avatar,
+.dark .ai-chatbot-container .assistant-avatar {
+  background: linear-gradient(135deg, #2b223d, #100025) !important;
+  color: white !important;
+}
+
+/* Dark Mode AI Avatar in Header */
+html.dark .ai-avatar,
+body[data-theme="dark"] .ai-avatar,
+.dark .ai-chatbot-container .ai-avatar {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Dark Mode User Message Bubble - Keep orange but adjust for dark theme */
+html.dark .user-bubble,
+body[data-theme="dark"] .user-bubble,
+.dark .ai-chatbot-container .user-bubble {
+  background: linear-gradient(135deg, #2b223d, #100025) !important;
+  color: white !important;
+}
+
+/* Dark Mode Action Buttons in Header */
+html.dark .action-btn,
+body[data-theme="dark"] .action-btn,
+.dark .ai-chatbot-container .action-btn {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
+html.dark .action-btn:hover,
+body[data-theme="dark"] .action-btn:hover,
+.dark .ai-chatbot-container .action-btn:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
 }
 
 .header-content {
@@ -809,4 +898,29 @@
       background: #64748b;
     }
   }
+}
+
+/* === GLOBAL DARK MODE OVERRIDES (in case of ViewEncapsulation issues) === */
+:global(.dark) app-ai-chatbot .chatbot-header,
+:global([data-theme="dark"]) app-ai-chatbot .chatbot-header {
+  background: linear-gradient(135deg, #2b223d, #100025) !important;
+  color: white !important;
+}
+
+:global(.dark) app-ai-chatbot .send-btn,
+:global([data-theme="dark"]) app-ai-chatbot .send-btn {
+  background: linear-gradient(135deg, #2b223d, #100025) !important;
+  color: white !important;
+}
+
+:global(.dark) app-ai-chatbot .assistant-avatar,
+:global([data-theme="dark"]) app-ai-chatbot .assistant-avatar {
+  background: linear-gradient(135deg, #2b223d, #100025) !important;
+  color: white !important;
+}
+
+:global(.dark) app-ai-chatbot .user-bubble,
+:global([data-theme="dark"]) app-ai-chatbot .user-bubble {
+  background: linear-gradient(135deg, #2b223d, #100025) !important;
+  color: white !important;
 }
