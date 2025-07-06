@@ -59,7 +59,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
-        boolean skip = path.startsWith("/api/orders/test/")
+        // Skip all non-API paths (static resources, frontend routes, etc.)
+        // OR skip test API endpoints
+        boolean skip = !path.startsWith("/api/")
+            || path.startsWith("/api/orders/test/")
             || path.startsWith("/api/kpi/orders-per-day/test")
             || path.startsWith("/api/sales/test/")
             || path.startsWith("/api/test")
