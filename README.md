@@ -4,6 +4,8 @@
 ### Access to Dashboard: https://dashboard.pizzaworldplus.tech/
 ### GitHub Repository: https://github.com/luigids03/PizzaWorld
 
+---
+
 A comprehensive business intelligence dashboard system for PizzaWorld with Spring Boot backend, Angular frontend, and AI-powered assistant capabilities.
 
 **Developed for the Programming Lab module in the Business Information Systems bachelor's program.**
