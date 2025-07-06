@@ -91,7 +91,9 @@
     \vspace{2cm}
     
     {\large \textbf{Demo Video}}\\
-    \href{https://www.youtube.com/watch?v=hr8LjElGZ5c}{\textbf{PizzaWorld Dashboard Demo - Watch our comprehensive demo video showcasing features and capabilities}}
+\href{https://www.youtube.com/watch?v=hr8LjElGZ5c}{\textbf{PizzaWorld Dashboard Demo - Watch our comprehensive demo video showcasing features and capabilities}}
+
+\href{https://www.youtube.com/watch?v=gkvtr3SErVA}{\textbf{Email Service Demo - Watch our email support system demonstration}}
     
     \vfill
     
@@ -172,15 +174,20 @@ The script automatically:
 \subsection{Backend (Spring Boot)}
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{RESTful API} with comprehensive endpoint coverage
-    \item \textbf{AI Assistant Integration} with Google Gemma AI
+    \item \textbf{RESTful API} with 90+ endpoints covering all business operations
+    \item \textbf{AI Assistant Integration} with Google Gemma AI and real-time streaming
     \item \textbf{JWT Authentication} with role-based access control (RBAC)
     \item \textbf{Spring Security} with custom authentication filter
     \item \textbf{Supabase PostgreSQL Integration} with optimized native queries
-    \item \textbf{Materialized Views} for high-performance analytics
-    \item \textbf{Email System} with SMTP integration and support tickets
+    \item \textbf{Materialized Views} for high-performance analytics (15+ specialized views)
+    \item \textbf{Advanced Store Analytics} with individual store performance tracking
+    \item \textbf{Customer Analytics} including lifetime value and retention analysis
+    \item \textbf{Product Analytics} with trend analysis and comparison capabilities
+    \item \textbf{Revenue Analytics} with multi-dimensional filtering and time series
+    \item \textbf{Email Support System} with SMTP integration for customer support
     \item \textbf{Knowledge Base} with document retrieval and contextual responses
-    \item \textbf{CSV Export} for all data tables with role-based filtering
+    \item \textbf{Comprehensive CSV Export} for all data views with role-based filtering
+    \item \textbf{Dynamic Filtering \& Pagination} for large datasets
     \item \textbf{Global Exception Handling} with meaningful error messages
 \end{itemize}
 
@@ -209,6 +216,72 @@ The script automatically:
     \item \textbf{AI-generated Insights} based on business data
     \item \textbf{Role-based AI Responses} tailored to user permissions
     \item \textbf{Intelligent Fallbacks} when AI is unavailable
+\end{itemize}
+
+\subsection{Advanced Store Analytics}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Individual Store Performance} tracking with comprehensive KPIs
+    \item \textbf{Store Revenue Trends} with customizable time periods and comparisons
+    \item \textbf{Hourly Performance Analysis} for operational optimization
+    \item \textbf{Category Performance Tracking} by store location
+    \item \textbf{Daily Operations Monitoring} with efficiency metrics
+    \item \textbf{Customer Insights} per store including acquisition and retention
+    \item \textbf{Product Performance Analysis} by individual store
+    \item \textbf{Store Efficiency Metrics} including capacity utilization
+    \item \textbf{Comparative Analytics} between stores, states, and national averages
+    \item \textbf{Custom Date Range Analysis} with flexible time period selection
+\end{itemize}
+
+\subsection{Customer Analytics \& Intelligence}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Customer Lifetime Value (CLV)} analysis with segmentation
+    \item \textbf{Customer Retention Analysis} with cohort tracking
+    \item \textbf{Customer Acquisition Metrics} by location and time period
+    \item \textbf{Store Capacity Analysis} including peak hours identification
+    \item \textbf{Customer Distance Metrics} for delivery optimization
+    \item \textbf{Retention Rate Tracking} across different customer segments
+    \item \textbf{Purchase Pattern Analysis} for targeted marketing
+\end{itemize}
+
+\subsection{Advanced Product Analytics}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Product Performance Tracking} with trend analysis
+    \item \textbf{Product KPI Analysis} including revenue, orders, and growth metrics
+    \item \textbf{Product Comparison Tools} for competitive analysis
+    \item \textbf{Revenue by Category} breakdown with filtering capabilities
+    \item \textbf{Product Trend Analysis} with customizable time intervals
+    \item \textbf{Launch Performance Tracking} for new products
+    \item \textbf{Category Performance Analytics} across all product lines
+    \item \textbf{Product Mix Analysis} by store and region
+\end{itemize}
+
+\subsection{Data Export \& Reporting}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Comprehensive CSV Export} for all analytics views and data tables
+    \item \textbf{Role-based Export Filtering} ensuring users only export permitted data
+    \item \textbf{Dashboard KPI Export} with summary metrics
+    \item \textbf{Store Performance Export} including all analytics and comparisons
+    \item \textbf{Product Performance Export} with trend analysis and comparisons
+    \item \textbf{Customer Analytics Export} including CLV and retention data
+    \item \textbf{Revenue Analytics Export} with time series and comparative data
+    \item \textbf{Orders Export} with advanced filtering and search capabilities
+    \item \textbf{Store Capacity Export} with utilization and efficiency metrics
+    \item \textbf{Custom Date Range Export} for any time period analysis
+    \item \textbf{Automated Export Processing} with optimized data formatting
+\end{itemize}
+
+\subsection{Email Support System}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Customer Support Integration} with automated email processing
+    \item \textbf{Background Email Processing} for improved response times
+    \item \textbf{Support Ticket Management} with email notifications
+    \item \textbf{SMTP Integration} with Gmail for reliable delivery
+    \item \textbf{Error Handling \& Logging} for support request tracking
 \end{itemize}
 
 \section{User Roles \& Permissions}
@@ -258,39 +331,177 @@ The script automatically:
 \begin{itemize}[leftmargin=*]
     \item \texttt{POST /api/login} - User authentication
     \item \texttt{GET /api/me} - Current user information
+    \item \texttt{POST /api/logout} - User logout
+    \item \texttt{POST /api/create-test-user} - Create test user (development)
 \end{itemize}
 
 \subsection{Dashboard \& Analytics}
 \begin{itemize}[leftmargin=*]
-    \item \texttt{GET /api/dashboard-kpis} - Main KPI metrics
-    \item \texttt{GET /api/recent-orders} - Recent order list
-    \item \texttt{GET /api/kpi/revenue-trend} - Revenue analytics
-    \item \texttt{GET /api/analytics/customer-lifetime-value} - CLV analysis
-    \item \texttt{GET /api/analytics/customer-retention} - Retention metrics
+    \item \texttt{GET /api/v2/dashboard/kpis} - Main KPI metrics
+    \item \texttt{GET /api/v2/dashboard/kpis/export} - Export dashboard KPIs to CSV
+    \item \texttt{GET /api/v2/orders/recent} - Recent order list
+    \item \texttt{GET /api/v2/analytics/revenue/by-year} - Annual revenue analytics
+    \item \texttt{GET /api/v2/analytics/revenue/by-month} - Monthly revenue analytics
+    \item \texttt{GET /api/v2/analytics/revenue/by-week} - Weekly revenue analytics
+    \item \texttt{GET /api/v2/analytics/revenue/by-store} - Revenue by store analytics
+    \item \texttt{GET /api/v2/analytics/store-performance} - Store performance metrics
+    \item \texttt{GET /api/v2/analytics/hourly-performance} - Hourly performance analytics
+    \item \texttt{GET /api/v2/analytics/hourly-performance/export} - Export hourly performance data
+    \item \texttt{GET /api/v2/analytics/product-performance} - Product performance analytics
+    \item \texttt{GET /api/v2/analytics/product-performance/export} - Export product performance data
+    \item \texttt{GET /api/v2/analytics/category-performance} - Category performance analytics
+    \item \texttt{GET /api/v2/analytics/daily-trends} - Daily revenue trends
+    \item \texttt{GET /api/v2/analytics/monthly-trends} - Monthly revenue trends
+    \item \texttt{GET /api/v2/analytics/store-comparison} - Store performance comparison
+    \item \texttt{GET /api/v2/analytics/state-comparison} - State revenue trends
+    \item \texttt{GET /api/v2/analytics/state-performance} - State performance analytics
+    \item \texttt{GET /api/v2/analytics/monthly-revenue-trends} - Monthly revenue trends by store
+\end{itemize}
+
+\subsection{Store Analytics}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/v2/stores} - Store directory with role-based filtering
+    \item \texttt{GET /api/v2/stores/export} - Export stores to CSV
+    \item \texttt{GET /api/v2/stores/performance} - Store performance analytics
+    \item \texttt{GET /api/v2/stores/performance/export} - Export store performance to CSV
+    \item \texttt{GET /api/v2/stores/hourly-performance} - Aggregated hourly performance across stores
+    \item \texttt{GET /api/v2/stores/customer-acquisition} - Store customer acquisition metrics
+    \item \texttt{GET /api/v2/stores/product-mix} - Product mix analysis by store
+    \item \texttt{GET /api/v2/stores/weekly-trends} - Weekly performance trends
+    \item \texttt{GET /api/v2/stores/daily-operations} - Daily operations overview
+    \item \texttt{GET /api/v2/stores/efficiency-metrics} - Store efficiency metrics
+\end{itemize}
+
+\subsection{Individual Store Analytics}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/v2/stores/\{storeId\}/analytics/overview} - Individual store overview
+    \item \texttt{GET /api/v2/stores/\{storeId\}/analytics/revenue-trends} - Store revenue trends
+    \item \texttt{GET /api/v2/stores/\{storeId\}/analytics/hourly-performance} - Store hourly performance
+    \item \texttt{GET /api/v2/stores/\{storeId\}/analytics/category-performance} - Store category performance
+    \item \texttt{GET /api/v2/stores/\{storeId\}/analytics/daily-operations} - Store daily operations
+    \item \texttt{GET /api/v2/stores/\{storeId\}/analytics/customer-insights} - Store customer insights
+    \item \texttt{GET /api/v2/stores/\{storeId\}/analytics/product-performance} - Store product performance
+    \item \texttt{GET /api/v2/stores/\{storeId\}/analytics/recent-orders} - Store recent orders
+    \item \texttt{GET /api/v2/stores/\{storeId\}/analytics/efficiency-metrics} - Store efficiency metrics
+    \item \texttt{GET /api/v2/stores/\{storeId\}/analytics/contextual-overview} - Enhanced contextual overview
+    \item \texttt{GET /api/v2/stores/\{storeId\}/analytics/enhanced-revenue-trends} - Enhanced revenue trends
+    \item \texttt{GET /api/v2/stores/\{storeId\}/analytics/enhanced-performance} - Enhanced performance metrics
+    \item \texttt{GET /api/v2/stores/\{storeId\}/analytics/custom-range} - Custom date range analytics
+    \item \texttt{POST /api/v2/stores/\{storeId\}/analytics/compare} - Compare analytics periods
+\end{itemize}
+
+\subsection{Advanced Product Analytics}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/v2/products} - Product catalog with search and filtering
+    \item \texttt{GET /api/v2/products/export} - Export products to CSV
+    \item \texttt{GET /api/v2/products/top} - Top performing products
+    \item \texttt{GET /api/v2/products/top/export} - Export top products to CSV
+    \item \texttt{GET /api/v2/products/performance} - Product performance analytics
+    \item \texttt{GET /api/v2/products/performance/export} - Export product performance to CSV
+    \item \texttt{GET /api/v2/products/kpis} - Product KPIs with filtering
+    \item \texttt{GET /api/v2/products/revenue-by-category} - Revenue breakdown by category
+    \item \texttt{GET /api/v2/products/details/\{sku\}} - Product details by SKU
+\end{itemize}
+
+\subsection{Individual Product Analytics}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/v2/products/kpi} - Individual product KPI analysis
+    \item \texttt{GET /api/v2/products/trend} - Product trend analysis
+    \item \texttt{GET /api/v2/products/trend/export} - Export product trend data to CSV
+    \item \texttt{GET /api/v2/products/compare} - Product comparison analysis
+    \item \texttt{GET /api/v2/products/revenue-trend} - Product revenue trend analysis
+\end{itemize}
+
+\subsection{Product Chart Analytics}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/v2/products/overview-chart} - Products overview chart data
+    \item \texttt{GET /api/v2/products/overview-chart/custom-range} - Custom range overview chart
+    \item \texttt{POST /api/v2/products/overview-chart/compare} - Compare overview chart periods
+    \item \texttt{GET /api/v2/products/analytics/custom-range} - Custom range product analytics
+    \item \texttt{GET /api/v2/products/analytics/custom-range/export} - Export custom range analytics
+    \item \texttt{POST /api/v2/products/analytics/compare} - Compare product analytics periods
+    \item \texttt{POST /api/v2/products/analytics/compare/export} - Export analytics comparison
+\end{itemize}
+
+\subsection{Customer Analytics}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/v2/analytics/customer-lifetime-value} - Customer lifetime value analysis
+    \item \texttt{GET /api/v2/analytics/customer-lifetime-value/summary} - CLV summary metrics
+    \item \texttt{GET /api/v2/analytics/customer-lifetime-value/export} - Export CLV data to CSV
+    \item \texttt{GET /api/v2/analytics/customer-retention} - Customer retention analysis
+    \item \texttt{GET /api/v2/analytics/customer-retention/export} - Export retention data to CSV
+    \item \texttt{GET /api/v2/analytics/customer-acquisition} - Customer acquisition analytics
+    \item \texttt{GET /api/v2/analytics/store-capacity} - Store capacity analysis (legacy)
+    \item \texttt{GET /api/v2/analytics/store-capacity/summary} - Store capacity summary (legacy)
+    \item \texttt{GET /api/v2/analytics/store-capacity/peak-hours} - Peak hours analysis (legacy)
+    \item \texttt{GET /api/v2/analytics/store-capacity/export} - Export capacity data (legacy)
+\end{itemize}
+
+\subsection{Advanced Store Capacity Analytics (V3)}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/v2/analytics/store-capacity-v3/summary} - Enhanced store capacity summary
+    \item \texttt{GET /api/v2/analytics/store-capacity-v3/metrics} - Store capacity metrics
+    \item \texttt{GET /api/v2/analytics/store-capacity-v3/peak-hours} - Advanced peak hours analysis
+    \item \texttt{GET /api/v2/analytics/store-capacity-v3/customer-distance} - Customer distance metrics
+    \item \texttt{GET /api/v2/analytics/store-capacity-v3/delivery-metrics} - Delivery performance metrics
+    \item \texttt{GET /api/v2/analytics/store-capacity-v3/utilization-chart} - Store utilization chart data
+    \item \texttt{GET /api/v2/analytics/store-capacity-v3/export} - Export enhanced capacity data
+\end{itemize}
+
+\subsection{Orders Management}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/v2/orders} - Orders with advanced filtering and pagination
+    \item \texttt{GET /api/v2/orders/export} - Export filtered orders to CSV
+    \item \texttt{GET /api/v2/orders/available-states} - Available states for filtering
+    \item \texttt{GET /api/v2/orders/kpis} - Orders KPIs with filtering
+\end{itemize}
+
+\subsection{Global KPI Analytics}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/v2/kpis/global-store} - Global store KPIs from materialized views
+    \item \texttt{GET /api/v2/kpis/global-store/export} - Export global store KPIs to CSV
+\end{itemize}
+
+\subsection{Revenue Analytics \& Charts}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/v2/store-revenue-chart} - Store revenue chart data
+    \item \texttt{GET /api/v2/store-revenue-chart/export} - Export revenue chart to CSV
+    \item \texttt{GET /api/v2/store-revenue-chart/years} - Available years for charts
+    \item \texttt{GET /api/v2/store-revenue-chart/months} - Available months for charts
+    \item \texttt{GET /api/v2/chart/store-revenue} - Dynamic store revenue charts
+    \item \texttt{GET /api/v2/chart/store-revenue/date-range} - Revenue by custom date range
+    \item \texttt{GET /api/v2/chart/store-revenue/export} - Export chart data to CSV
+\end{itemize}
+
+\subsection{Chart Time Period Utilities}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/v2/chart/time-periods/years} - Available years for time filtering
+    \item \texttt{GET /api/v2/chart/time-periods/months} - Available months for year
+    \item \texttt{GET /api/v2/chart/time-periods/quarters} - Available quarters for year
 \end{itemize}
 
 \subsection{AI Assistant}
 \begin{itemize}[leftmargin=*]
     \item \texttt{POST /api/ai/chat} - AI chat interaction
     \item \texttt{POST /api/ai/chat/stream} - Streaming AI responses
+    \item \texttt{GET /api/ai/chat/history/\{sessionId\}} - Get chat history
     \item \texttt{POST /api/ai/analyze} - Natural language query analysis
     \item \texttt{GET /api/ai/insights} - AI-generated business insights
+    \item \texttt{GET /api/ai/health} - AI service health check
+    \item \texttt{GET /api/ai/config} - Public AI configuration
     \item \texttt{GET /api/ai/status} - AI system status
+    \item \texttt{POST /api/ai/test} - Test Google AI connection
 \end{itemize}
 
-\subsection{Business Operations}
+\subsection{Email Support}
 \begin{itemize}[leftmargin=*]
-    \item \texttt{GET /api/orders} - Order management with filtering
-    \item \texttt{GET /api/products} - Product catalog
-    \item \texttt{GET /api/stores} - Store directory
-    \item \texttt{GET /api/customers} - Customer data
+    \item \texttt{POST /api/send-support-email} - Send support email
 \end{itemize}
 
-\subsection{Data Export}
+\subsection{System Health}
 \begin{itemize}[leftmargin=*]
-    \item \texttt{GET /api/orders/export} - Orders CSV export
-    \item \texttt{GET /api/products/export} - Products CSV export
-    \item \texttt{GET /api/stores/export} - Stores CSV export
+    \item \texttt{GET /api/v2/health} - API health check
+    \item \texttt{GET /api/v2/profile} - User profile information
 \end{itemize}
 
 \section{Technology Stack}
@@ -311,13 +522,15 @@ The script automatically:
 
 \subsection{Frontend Technologies}
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Angular 19} - SPA framework
-    \item \textbf{TypeScript 5.7} - Type-safe JavaScript
-    \item \textbf{RxJS 7.8} - Reactive programming
-    \item \textbf{Tailwind CSS 3.4} - Utility-first CSS
-    \item \textbf{PrimeNG 19} - UI component library
-    \item \textbf{ApexCharts 3.41} - Data visualization
-    \item \textbf{Angular Material 19} - Material Design components
+    \item \textbf{Angular 19.1.0} - SPA framework
+    \item \textbf{TypeScript 5.7.2} - Type-safe JavaScript
+    \item \textbf{RxJS 7.8.0} - Reactive programming
+    \item \textbf{Tailwind CSS 3.4.17} - Utility-first CSS
+    \item \textbf{PrimeNG 19.1.3} - UI component library
+    \item \textbf{ApexCharts 3.41.0} - Data visualization
+    \item \textbf{Angular Material 19.2.18} - Material Design components
+    \item \textbf{Chart.js 4.4.9} - Additional charting library
+    \item \textbf{D3 7.9.0} - Data visualization utilities
 \end{itemize}
 
 \subsection{AI \& Integration}

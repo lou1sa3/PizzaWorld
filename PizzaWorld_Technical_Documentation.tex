@@ -1,0 +1,1105 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{amssymb}
+
+% Page setup
+\geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+
+% Colors
+\definecolor{codeblue}{RGB}{0,100,200}
+\definecolor{codegray}{RGB}{128,128,128}
+\definecolor{codegreen}{RGB}{0,128,0}
+\definecolor{green}{RGB}{0,128,0}
+\definecolor{orange}{RGB}{255,165,0}
+\definecolor{red}{RGB}{255,0,0}
+
+% Code styling
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    backgroundcolor=\color{gray!5},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    keywordstyle=\color{codeblue},
+    commentstyle=\color{codegreen},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{codegray}
+}
+
+% Header/Footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{PizzaWorld Technical Documentation}
+\fancyhead[R]{v1.0}
+\fancyfoot[C]{\thepage}
+
+% Hyperlinks
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue
+}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\bfseries PizzaWorld Dashboard}\\[0.5cm]
+    {\Large Technical Documentation}
+    
+    \vspace{2cm}
+    
+    {\large Complete Developer Guide \& Code Documentation}
+    
+    \vspace{3cm}
+    
+    \begin{tabular}{rl}
+        \textbf{Project:} & PizzaWorld Business Intelligence Dashboard \\[0.2cm]
+        \textbf{Version:} & 1.0 \\[0.2cm]
+        \textbf{Framework:} & Spring Boot 3.4.6 + Angular 19 \\[0.2cm]
+        \textbf{Database:} & Supabase PostgreSQL \\[0.2cm]
+        \textbf{AI Integration:} & Google Gemma AI \\[0.2cm]
+        \textbf{Repository:} & \href{https://github.com/luigids03/PizzaWorld}{github.com/luigids03/PizzaWorld}
+    \end{tabular}
+    
+    \vfill
+    
+    {\large \textcopyright{} 2025 - Academic Project Documentation}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{System Architecture}
+
+\subsection{Overview}
+PizzaWorld is a full-stack business intelligence dashboard with microservices architecture:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Backend}: Spring Boot REST API with 90+ endpoints
+    \item \textbf{Frontend}: Angular SPA with TypeScript
+    \item \textbf{AI Layer}: Google Gemma integration with knowledge base
+    \item \textbf{Security}: JWT authentication with role-based access
+    \item \textbf{Database}: Supabase PostgreSQL with 15+ materialized views
+    \item \textbf{Analytics}: Advanced store, customer, and product analytics
+    \item \textbf{Export System}: Comprehensive CSV export for all data views
+    \item \textbf{Email Support}: Background email processing system
+\end{itemize}
+
+\subsection{Technology Stack}
+
+\begin{longtable}{|l|l|l|}
+\hline
+\textbf{Layer} & \textbf{Technology} & \textbf{Version} \\
+\hline
+\endhead
+Backend Framework & Spring Boot & 3.4.6 \\
+\hline
+Security & Spring Security & 6.x \\
+\hline
+Database & PostgreSQL (Supabase) & Latest \\
+\hline
+ORM & Spring Data JPA & 3.x \\
+\hline
+Frontend Framework & Angular & 19 \\
+\hline
+Language & TypeScript & 5.7 \\
+\hline
+UI Library & PrimeNG + Tailwind & 19 + 3.4 \\
+\hline
+Charts & ApexCharts & 3.41 \\
+\hline
+AI Integration & Google Gemma & Latest \\
+\hline
+Build Tool & Maven + Angular CLI & Latest \\
+\hline
+\end{longtable}
+
+\section{Backend Architecture}
+
+\subsection{Package Structure}
+
+\begin{lstlisting}[language=text, caption=Backend Package Organization]
+src/main/java/pizzaworld/
+├── controller/          # REST API Controllers
+│   ├── AuthController.java
+│   ├── OptimizedPizzaController.java
+│   ├── AIController.java
+│   └── SupportController.java
+├── service/            # Business Logic Layer
+│   ├── OptimizedPizzaService.java
+│   ├── AIService.java
+│   ├── GemmaAIService.java
+│   ├── StaticDocRetriever.java
+│   ├── UserService.java
+│   └── EmailService.java
+├── repository/         # Data Access Layer
+│   ├── OptimizedPizzaRepo.java
+│   └── UserRepo.java
+├── model/             # Entity Classes
+│   ├── User.java
+│   ├── ChatMessage.java
+│   ├── AIInsight.java
+│   └── CustomUserDetails.java
+├── security/          # Security Components
+│   ├── JwtAuthFilter.java
+│   └── SecurityConfig.java
+├── config/           # Configuration Classes
+│   ├── CorsConfig.java
+│   ├── EmailConfig.java
+│   └── PizzaConfig.java
+├── dto/              # Data Transfer Objects
+│   ├── DashboardKpiDto.java
+│   ├── ConsolidatedDto.java
+│   └── SalesKpiDto.java
+└── util/             # Utility Classes
+    ├── JwtUtil.java
+    ├── CsvExportUtil.java
+    └── BcryptTool.java
+\end{lstlisting}
+
+\subsection{Core Controllers}
+
+\subsubsection{AuthController}
+Handles user authentication and authorization:
+
+\begin{lstlisting}[language=java, caption=Authentication Endpoints]
+@RestController
+@RequestMapping("/api")
+public class AuthController {
+    
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request)
+    
+    @GetMapping("/me") 
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal CustomUserDetails user)
+    
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout()
+    
+    @PostMapping("/create-test-user")
+    public ResponseEntity<?> createTestUser()
+}
+\end{lstlisting}
+
+\subsubsection{OptimizedPizzaController}
+Main business logic controller for KPIs and analytics:
+
+\begin{lstlisting}[language=java, caption=Business Endpoints]
+@RestController 
+@RequestMapping("/api/v2")
+public class OptimizedPizzaController {
+    
+    @GetMapping("/dashboard/kpis")
+    public ResponseEntity<DashboardKpiDto> getDashboardKPIs(@AuthenticationPrincipal CustomUserDetails user)
+    
+    @GetMapping("/dashboard/kpis/export")
+    public void exportDashboardKPIs(@AuthenticationPrincipal CustomUserDetails user, 
+                                   HttpServletResponse response)
+    
+    @GetMapping("/orders/recent")
+    public ResponseEntity<List<Map<String, Object>>> getRecentOrders(
+        @RequestParam(defaultValue = "50") int limit,
+        @AuthenticationPrincipal CustomUserDetails user)
+    
+    @GetMapping("/analytics/revenue/by-year")
+    public ResponseEntity<List<Map<String, Object>>> getRevenueByYear(
+        @AuthenticationPrincipal CustomUserDetails user)
+    
+    @GetMapping("/analytics/customer-lifetime-value")
+    public ResponseEntity<List<Map<String, Object>>> getCustomerLifetimeValue(
+        @RequestParam(defaultValue = "100") Integer limit,
+        @RequestParam(required = false) List<String> states,
+        @RequestParam(required = false) List<String> storeIds,
+        @AuthenticationPrincipal CustomUserDetails user)
+    
+    @GetMapping("/stores/{storeId}/analytics/overview")
+    public ResponseEntity<Map<String, Object>> getStoreAnalyticsOverview(
+        @PathVariable String storeId,
+        @RequestParam(required = false) String timePeriod,
+        @AuthenticationPrincipal CustomUserDetails user)
+    
+    @GetMapping("/products/kpi")
+    public ResponseEntity<Map<String, Object>> getProductKPI(
+        @RequestParam String sku,
+        @RequestParam(defaultValue = "all-time") String timePeriod,
+        @AuthenticationPrincipal CustomUserDetails user)
+    
+    @GetMapping("/kpis/global-store")
+    public ResponseEntity<List<Map<String, Object>>> getGlobalStoreKPIs(
+        @AuthenticationPrincipal CustomUserDetails user)
+    
+    @GetMapping("/analytics/store-capacity-v3/summary")
+    public ResponseEntity<List<Map<String, Object>>> getStoreCapacityV3Summary(
+        @RequestParam(required = false) List<String> states,
+        @RequestParam(required = false) List<String> storeIds,
+        @AuthenticationPrincipal CustomUserDetails user)
+    
+    @PostMapping("/stores/{storeId}/analytics/compare")
+    public ResponseEntity<List<Map<String, Object>>> getStoreComparePeriods(
+        @PathVariable String storeId,
+        @RequestBody Map<String, Object> requestBody,
+        @AuthenticationPrincipal CustomUserDetails user)
+}
+\end{lstlisting}
+
+\subsubsection{AIController}
+AI assistant integration with Google Gemma:
+
+\begin{lstlisting}[language=java, caption=AI Endpoints]
+@RestController
+@RequestMapping("/api/ai")
+public class AIController {
+    
+    @PostMapping("/chat")
+    public ResponseEntity<?> chat(@RequestBody ChatRequest request, 
+                                 @AuthenticationPrincipal CustomUserDetails user)
+    
+    @PostMapping(path = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> chatStream(@RequestBody ChatRequest request,
+                                                   @AuthenticationPrincipal CustomUserDetails user)
+    
+    @GetMapping("/chat/history/{sessionId}")
+    public ResponseEntity<?> getChatHistory(@PathVariable String sessionId,
+                                           @AuthenticationPrincipal CustomUserDetails user)
+    
+    @PostMapping("/analyze")
+    public ResponseEntity<?> analyzeQuery(@RequestBody AnalyzeRequest request,
+                                        @AuthenticationPrincipal CustomUserDetails user)
+    
+    @GetMapping("/insights")
+    public ResponseEntity<?> getInsights(@AuthenticationPrincipal CustomUserDetails user)
+    
+    @GetMapping("/health")
+    public ResponseEntity<?> healthCheck()
+    
+    @GetMapping("/config")
+    public ResponseEntity<?> getPublicConfig()
+    
+    @GetMapping("/status")
+    public ResponseEntity<?> getAIStatus(@AuthenticationPrincipal CustomUserDetails user)
+    
+    @PostMapping("/test")
+    public ResponseEntity<?> testGoogleAI(@AuthenticationPrincipal CustomUserDetails user)
+}
+\end{lstlisting}
+
+\subsubsection{SupportController}
+Email support system for customer service:
+
+\begin{lstlisting}[language=java, caption=Support Endpoints]
+@RestController
+@RequestMapping("/api")
+public class SupportController {
+    
+    @Autowired
+    private EmailService emailService;
+    
+    @PostMapping("/send-support-email")
+    public ResponseEntity<?> sendSupportEmail(@RequestBody EmailRequest emailRequest) {
+        // Background email processing for improved response times
+        // Immediate success response - don't wait for email processing
+        
+        new Thread(() -> {
+            try {
+                emailService.sendSupportEmail(
+                    emailRequest.from,
+                    emailRequest.senderName,
+                    emailRequest.subject,
+                    emailRequest.message
+                );
+            } catch (Exception emailEx) {
+                logger.warning("Background email failed: " + emailEx.getMessage());
+            }
+        }).start();
+        
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "message", "Your message has been sent successfully!"
+        ));
+    }
+    
+    public static class EmailRequest {
+        public String to;
+        public String from;
+        public String senderName;
+        public String subject;
+        public String message;
+    }
+}
+\end{lstlisting}
+
+\subsection{Service Layer}
+
+\subsubsection{AIService}
+Core AI orchestration service:
+
+\begin{lstlisting}[language=java, caption=AI Service Implementation]
+@Service
+public class AIService {
+    
+    @Autowired
+    private GemmaAIService gemmaAIService;
+    
+    @Autowired 
+    private StaticDocRetriever docRetriever;
+    
+    // Non-persistent chat sessions (max 20 messages)
+    private final Map<String, Deque<ChatMessage>> chatSessions = new ConcurrentHashMap<>();
+    
+    public ChatMessage processChatMessage(String sessionId, String message, User user) {
+        // 1. Categorize message (support, analytics, general)
+        // 2. Build conversation context 
+        // 3. Retrieve knowledge snippets
+        // 4. Generate AI response with Gemma
+        // 5. Apply business consistency validation
+        // 6. Store in session (non-persistent)
+    }
+    
+    public List<AIInsight> generateBusinessInsights(User user) {
+        // Generate role-specific insights based on user permissions
+    }
+}
+\end{lstlisting}
+
+\subsubsection{GemmaAIService}
+Google AI integration service:
+
+\begin{lstlisting}[language=java, caption=Google AI Integration]
+@Service
+public class GemmaAIService {
+    
+    @Value("${google.ai.api.key}")
+    private String apiKey;
+    
+    @Value("${google.ai.model:gemma-3n-e2b-it}")
+    private String model;
+    
+    private final WebClient webClient;
+    
+    public String generateResponse(String userMessage, User user, 
+                                 String category, Map<String, Object> businessContext) {
+        // 1. Build business-specific prompt
+        // 2. Call Google AI API
+        // 3. Clean and validate response
+        // 4. Return contextual answer
+    }
+}
+\end{lstlisting}
+
+\subsection{Security Implementation}
+
+\subsubsection{JWT Authentication}
+
+\begin{lstlisting}[language=java, caption=JWT Security Filter]
+@Component
+public class JwtAuthFilter extends OncePerRequestFilter {
+    
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                  HttpServletResponse response,
+                                  FilterChain filterChain) {
+        // 1. Extract JWT token from Authorization header
+        // 2. Validate token signature and expiration
+        // 3. Load user details and permissions
+        // 4. Set security context
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Security Configuration}
+
+\begin{lstlisting}[language=java, caption=Security Configuration]
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/login", "/api/health").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("HQ_ADMIN")
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .build();
+    }
+}
+\end{lstlisting}
+
+\subsection{Database Layer}
+
+\subsubsection{Materialized Views}
+Performance-optimized views for analytics:
+
+\begin{lstlisting}[language=sql, caption=Key Materialized Views]
+-- KPI Views (Role-based)
+kpis_global_hq          -- Company-wide KPIs
+kpis_global_state       -- State-level KPIs  
+kpis_global_store       -- Store-level KPIs
+
+-- Revenue Analytics
+revenue_by_year_hq      -- Annual revenue trends
+revenue_by_month_hq     -- Monthly analysis
+revenue_by_week_hq      -- Weekly patterns
+revenue_by_day_hq       -- Daily tracking
+revenue_by_hour_hq      -- Hourly analysis
+
+-- Performance Views
+store_performance_hq    -- Store ranking
+customer_lifetime_value -- CLV analysis
+customer_retention_analysis -- Cohort analysis
+top_products_hq        -- Product performance
+\end{lstlisting}
+
+\subsubsection{Repository Layer}
+
+\begin{lstlisting}[language=java, caption=Optimized Repository]
+@Repository
+public class OptimizedPizzaRepo {
+    
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+    
+    // Role-based data access with native SQL
+    public DashboardKpiDto getDashboardKpis(User user) {
+        String sql = switch(user.getRole()) {
+            case "HQ_ADMIN" -> "SELECT * FROM kpis_global_hq";
+            case "STATE_MANAGER" -> "SELECT * FROM kpis_global_state WHERE state_abbr = ?";
+            case "STORE_MANAGER" -> "SELECT * FROM kpis_global_store WHERE storeid = ?";
+            default -> throw new IllegalArgumentException("Invalid role: " + user.getRole());
+        };
+        
+        return jdbcTemplate.queryForObject(sql, 
+            new BeanPropertyRowMapper<>(DashboardKpiDto.class),
+            getParametersForRole(user));
+    }
+    
+    public List<Map<String, Object>> getStoreAnalyticsOverview(User user, String storeId, 
+                                                              String timePeriod) {
+        String sql = buildStoreAnalyticsQuery(user.getRole(), timePeriod);
+        return jdbcTemplate.queryForList(sql, storeId);
+    }
+    
+    public List<Map<String, Object>> getCustomerLifetimeValue(User user, Integer limit, 
+                                                             List<String> states) {
+        String sql = buildCustomerCLVQuery(user.getRole());
+        return jdbcTemplate.queryForList(sql, getRoleSpecificParameters(user));
+    }
+    
+    public List<Map<String, Object>> getProductPerformanceAnalytics(User user, 
+                                                                   String category, 
+                                                                   Integer limit) {
+        String sql = buildProductAnalyticsQuery(user.getRole(), category);
+        return jdbcTemplate.queryForList(sql, limit);
+    }
+    
+    private Object[] getParametersForRole(User user) {
+        return switch(user.getRole()) {
+            case "STATE_MANAGER" -> new Object[]{user.getStateAbbr()};
+            case "STORE_MANAGER" -> new Object[]{user.getStoreId()};
+            default -> new Object[]{};
+        };
+    }
+}
+\end{lstlisting}
+
+\section{Frontend Architecture}
+
+\subsection{Angular Structure}
+
+\begin{lstlisting}[language=text, caption=Frontend Structure]
+src/app/
+├── pages/                    # Feature Modules
+│   ├── dashboard/           # Main dashboard
+│   ├── orders/             # Order management
+│   ├── products/           # Product catalog
+│   ├── stores/             # Store management
+│   ├── customer-analytics/ # Customer insights
+│   ├── delivery-metrics/   # Delivery tracking
+│   ├── profile/            # User profile
+│   ├── contact-support/    # Support system
+│   └── login/              # Authentication
+├── core/                   # Core Services
+│   ├── auth.service.ts     # Authentication
+│   ├── ai.service.ts       # AI integration
+│   ├── kpi.service.ts      # KPI management
+│   ├── auth.guard.ts       # Route protection
+│   ├── cache.service.ts    # Client caching
+│   ├── notification.service.ts # Notifications
+│   └── theme.service.ts    # Theme management
+└── shared/                 # Reusable Components
+    ├── ai-chatbot/         # AI chat interface
+    ├── loading-popup/      # Loading indicators
+    ├── notification/       # Alert system
+    └── sidebar/            # Navigation
+\end{lstlisting}
+
+\subsection{Core Services}
+
+\subsubsection{AuthService}
+
+\begin{lstlisting}[language=typescript, caption=Authentication Service]
+@Injectable({providedIn: 'root'})
+export class AuthService {
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  public currentUser$ = this.currentUserSubject.asObservable();
+
+  login(credentials: LoginRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>('/api/login', credentials)
+      .pipe(
+        tap(response => {
+          localStorage.setItem('token', response.token);
+          this.currentUserSubject.next(response.user);
+        })
+      );
+  }
+
+  hasRole(role: string): boolean {
+    const user = this.currentUserSubject.value;
+    return user?.role === role;
+  }
+}
+\end{lstlisting}
+
+\subsubsection{AIService}
+
+\begin{lstlisting}[language=typescript, caption=AI Service]
+@Injectable({providedIn: 'root'})
+export class AIService {
+  private chatHistorySubject = new BehaviorSubject<ChatMessage[]>([]);
+  public chatHistory$ = this.chatHistorySubject.asObservable();
+
+  sendMessage(message: string, context?: string): Observable<ChatMessage> {
+    return this.http.post<ChatResponse>('/api/ai/chat', {
+      sessionId: this.currentSessionId,
+      message,
+      context
+    });
+  }
+
+  sendMessageStream(message: string, context?: string): Observable<string> {
+    // Handle Server-Sent Events for real-time streaming
+    return new Observable<string>((observer) => {
+      // Fetch-based streaming implementation
+    });
+  }
+
+  getChatHistory(): Observable<ChatMessage[]> {
+    return this.http.get<any>('/api/ai/chat/history/' + this.currentSessionId);
+  }
+
+  getInsights(): Observable<AIInsight[]> {
+    return this.http.get<InsightsResponse>('/api/ai/insights');
+  }
+
+  analyzeQuery(query: string, context?: string, type?: string): Observable<AnalysisResponse> {
+    return this.http.post<AnalysisResponse>('/api/ai/analyze', { query, context, type });
+  }
+
+  healthCheck(): Observable<boolean> {
+    return this.http.get<any>('/api/ai/health');
+  }
+
+  testGoogleAI(): Observable<any> {
+    return this.http.post<any>('/api/ai/test', {});
+  }
+
+  getAIStatus(): Observable<any> {
+    return this.http.get<any>('/api/ai/status');
+  }
+
+  clearChatSession(): void {
+    this.currentSessionId = this.generateSessionId();
+    this.chatHistorySubject.next([]);
+  }
+}
+\end{lstlisting}
+
+\subsection{Component Architecture}
+
+\subsubsection{Dashboard Component}
+
+\begin{lstlisting}[language=typescript, caption=Dashboard Implementation]
+@Component({
+  selector: 'app-dashboard',
+  templateUrl: './dashboard.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class DashboardComponent implements OnInit {
+  
+  kpis$ = this.kpiService.getDashboardKpis();
+  recentOrders$ = this.kpiService.getRecentOrders();
+  revenueChart$ = this.kpiService.getRevenueTrend();
+
+  constructor(
+    private kpiService: KpiService,
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit() {
+    // Auto-refresh every 30 seconds
+    interval(30000).pipe(
+      startWith(0),
+      switchMap(() => this.loadDashboardData())
+    ).subscribe();
+  }
+
+  private loadDashboardData() {
+    return combineLatest([
+      this.kpis$,
+      this.recentOrders$,
+      this.revenueChart$
+    ]);
+  }
+}
+\end{lstlisting}
+
+\subsubsection{AI Chatbot Component}
+
+\begin{lstlisting}[language=typescript, caption=AI Chatbot]
+@Component({
+  selector: 'app-ai-chatbot',
+  templateUrl: './ai-chatbot.component.html'
+})
+export class AIChatbotComponent {
+  
+  messages$ = this.aiService.chatHistory$;
+  isStreaming = false;
+
+  sendMessage(message: string) {
+    this.isStreaming = true;
+    
+    this.aiService.streamChat(message).subscribe({
+      next: (token) => this.appendStreamingToken(token),
+      complete: () => this.isStreaming = false,
+      error: (error) => this.handleStreamError(error)
+    });
+  }
+
+  private appendStreamingToken(token: string) {
+    // Real-time token streaming for smooth UX
+  }
+}
+\end{lstlisting}
+
+\section{AI Integration}
+
+\subsection{Google Gemma Integration}
+
+\subsubsection{AI Configuration}
+
+\begin{lstlisting}[language=properties, caption=AI Configuration]
+# Google AI Settings
+google.ai.api.key=${GOOGLE_AI_API_KEY}
+google.ai.model=${GOOGLE_AI_MODEL:gemma-3n-e2b-it}
+google.ai.enabled=${GOOGLE_AI_ENABLED:true}
+\end{lstlisting}
+
+\subsubsection{Knowledge Base System}
+
+\begin{lstlisting}[language=java, caption=Document Retrieval]
+@Service
+public class StaticDocRetriever {
+    
+    private List<KnowledgeChunk> knowledgeBase;
+    
+    @PostConstruct
+    public void loadKnowledgeBase() {
+        // Load from resources/knowledge/
+        // - business-operations.md
+        // - technical-guide.md  
+        // - faq.md
+    }
+    
+    public Optional<String> findMatch(String query) {
+        return knowledgeBase.stream()
+            .filter(chunk -> matchesKeywords(chunk, query))
+            .findFirst()
+            .map(KnowledgeChunk::getContent);
+    }
+}
+\end{lstlisting}
+
+\subsection{Chat System Features}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Non-persistent Sessions}: Last 20 messages per session
+    \item \textbf{Real-time Streaming}: Server-Sent Events for token-by-token delivery
+    \item \textbf{Business Context}: AI responses include live business data
+    \item \textbf{Role-based Responses}: Tailored to user permissions
+    \item \textbf{Intelligent Fallbacks}: Rule-based responses when AI unavailable
+    \item \textbf{Knowledge Integration}: Contextual responses using knowledge base
+\end{itemize}
+
+\section{Database Schema}
+
+\subsection{Core Tables}
+
+\begin{lstlisting}[language=sql, caption=Core Database Tables]
+-- User Management
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    state_abbr VARCHAR(10),
+    store_id INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Orders and Items
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    customer_id INTEGER,
+    store_id INTEGER,
+    order_date TIMESTAMP,
+    total_amount DECIMAL(10,2),
+    status VARCHAR(50)
+);
+
+CREATE TABLE order_items (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(id),
+    product_sku VARCHAR(100),
+    quantity INTEGER,
+    unit_price DECIMAL(10,2)
+);
+
+-- Products and Stores
+CREATE TABLE products (
+    sku VARCHAR(100) PRIMARY KEY,
+    product_name VARCHAR(255),
+    category VARCHAR(100),
+    size VARCHAR(50),
+    price DECIMAL(10,2),
+    launch_date DATE
+);
+
+CREATE TABLE stores (
+    id SERIAL PRIMARY KEY,
+    store_name VARCHAR(255),
+    city VARCHAR(100),
+    state_name VARCHAR(100),
+    state_abbr VARCHAR(10),
+    zip_code VARCHAR(20)
+);
+\end{lstlisting}
+
+\subsection{Role-Based Data Access}
+
+\begin{lstlisting}[language=sql, caption=Role-Based Views]
+-- HQ Admin: All data
+CREATE MATERIALIZED VIEW kpis_global_hq AS
+SELECT 
+    SUM(total_amount) as total_revenue,
+    COUNT(*) as total_orders,
+    AVG(total_amount) as avg_order_value,
+    COUNT(DISTINCT customer_id) as total_customers
+FROM orders;
+
+-- State Manager: State-filtered data  
+CREATE MATERIALIZED VIEW kpis_global_state AS
+SELECT 
+    s.state_abbr,
+    SUM(o.total_amount) as total_revenue,
+    COUNT(o.*) as total_orders,
+    AVG(o.total_amount) as avg_order_value
+FROM orders o
+JOIN stores s ON o.store_id = s.id
+GROUP BY s.state_abbr;
+
+-- Store Manager: Store-specific data
+CREATE MATERIALIZED VIEW kpis_global_store AS  
+SELECT 
+    store_id,
+    SUM(total_amount) as total_revenue,
+    COUNT(*) as total_orders,
+    AVG(total_amount) as avg_order_value
+FROM orders
+GROUP BY store_id;
+\end{lstlisting}
+
+\section{Configuration Management}
+
+\subsection{Environment Variables}
+
+\begin{lstlisting}[language=properties, caption=Application Configuration]
+# Database Configuration
+spring.datasource.url=${DB_URL}
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
+
+# Security
+jwt.secret=${JWT_SECRET}
+
+# Email Configuration  
+spring.mail.username=pizzaworldplus@gmail.com
+spring.mail.password=${GMAIL_APP_PASSWORD}
+
+# AI Configuration
+google.ai.api.key=${GOOGLE_AI_API_KEY}
+google.ai.model=${GOOGLE_AI_MODEL:gemma-3n-e2b-it}
+
+# Performance Settings
+spring.datasource.hikari.maximum-pool-size=30
+spring.datasource.hikari.minimum-idle=10
+\end{lstlisting}
+
+\subsection{CORS Configuration}
+
+\begin{lstlisting}[language=java, caption=CORS Setup]
+@Configuration
+public class CorsConfig {
+    
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:*",
+            "https://*.onrender.com", 
+            "https://pizzaworldplus.tech",
+            "https://*.pizzaworldplus.tech"
+        ));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+        configuration.setAllowCredentials(true);
+        return source;
+    }
+}
+\end{lstlisting}
+
+\section{Deployment & DevOps}
+
+\subsection{Docker Configuration}
+
+\begin{lstlisting}[language=dockerfile, caption=Production Dockerfile]
+FROM eclipse-temurin:17-jdk-jammy
+WORKDIR /app
+
+# Copy and build application
+COPY . .
+RUN ./mvnw clean package -DskipTests
+
+# Runtime configuration
+EXPOSE 8080
+CMD ["java", "-Xmx1400m", "-Xms512m", "-XX:+UseG1GC", "-jar", "target/*.jar"]
+\end{lstlisting}
+
+\subsection{Cloud Deployment}
+
+\begin{lstlisting}[language=yaml, caption=Render.com Configuration]
+services:
+  - type: web
+    name: pizzaworld-backend
+    env: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      - key: DB_URL
+        fromDatabase:
+          name: pizzaworld-db
+          property: connectionString
+          
+  - type: web  
+    name: pizzaworld-frontend
+    runtime: static
+    buildCommand: npm install && npm run build:prod
+    staticPublishPath: ./dist/frontend
+\end{lstlisting}
+
+\section{Testing Strategy}
+
+\subsection{Backend Testing}
+
+\begin{lstlisting}[language=java, caption=Unit Test Example]
+@ExtendWith(MockitoExtension.class)
+class AIServiceTest {
+    
+    @Mock
+    private GemmaAIService gemmaAIService;
+    
+    @Mock
+    private StaticDocRetriever docRetriever;
+    
+    @InjectMocks
+    private AIService aiService;
+    
+    @Test
+    void testChatMessageProcessing() {
+        // Given
+        User user = new User("testuser", "HQ_ADMIN");
+        String message = "What is our revenue?";
+        
+        // When
+        ChatMessage response = aiService.processChatMessage("session1", message, user);
+        
+        // Then
+        assertThat(response.getMessage()).isNotNull();
+        assertThat(response.getCategory()).isEqualTo("analytics");
+    }
+}
+\end{lstlisting}
+
+\subsection{Frontend Testing}
+
+\begin{lstlisting}[language=typescript, caption=Component Test]
+describe('DashboardComponent', () => {
+  let component: DashboardComponent;
+  let fixture: ComponentFixture<DashboardComponent>;
+  let kpiService: jasmine.SpyObj<KpiService>;
+
+  beforeEach(() => {
+    const spy = jasmine.createSpyObj('KpiService', ['getDashboardKpis']);
+    
+    TestBed.configureTestingModule({
+      declarations: [DashboardComponent],
+      providers: [
+        { provide: KpiService, useValue: spy }
+      ]
+    });
+    
+    fixture = TestBed.createComponent(DashboardComponent);
+    component = fixture.componentInstance;
+    kpiService = TestBed.inject(KpiService) as jasmine.SpyObj<KpiService>;
+  });
+
+  it('should load dashboard data on init', () => {
+    kpiService.getDashboardKpis.and.returnValue(of(mockKpis));
+    
+    component.ngOnInit();
+    
+    expect(kpiService.getDashboardKpis).toHaveBeenCalled();
+  });
+});
+\end{lstlisting}
+
+\section{Performance Optimization}
+
+\subsection{Backend Optimizations}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Materialized Views}: Pre-computed analytics for instant response
+    \item \textbf{Connection Pooling}: HikariCP with 30 max connections
+    \item \textbf{JVM Tuning}: G1GC with 2GB heap, string deduplication
+    \item \textbf{Query Optimization}: Native SQL with proper indexing
+    \item \textbf{Caching}: Application-level caching for business context
+\end{itemize}
+
+\subsection{Frontend Optimizations}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Lazy Loading}: Route-based code splitting
+    \item \textbf{OnPush Strategy}: Optimized change detection
+    \item \textbf{Virtual Scrolling}: For large data sets
+    \item \textbf{HTTP Caching}: Response caching with interceptors
+    \item \textbf{Bundle Optimization}: Tree shaking and minification
+\end{itemize}
+
+\section{Security Implementation}
+
+\subsection{Authentication Flow}
+
+\begin{enumerate}[leftmargin=*]
+    \item User submits credentials to \texttt{/api/login}
+    \item Server validates credentials against BCrypt hash
+    \item JWT token generated with user role and permissions
+    \item Token returned to client with 24-hour expiration
+    \item Client includes token in Authorization header
+    \item \texttt{JwtAuthFilter} validates token on each request
+    \item Security context set with user details and roles
+\end{enumerate}
+
+\subsection{Authorization Matrix}
+
+\textbf{Legend:} F=Full, L=Filtered, R=Read-only, X=Denied
+
+\begin{center}
+\footnotesize
+\begin{longtable}{|l|c|c|c|}
+\hline
+\textbf{Endpoint} & \textbf{HQ} & \textbf{ST} & \textbf{SH} \\
+\hline
+\endhead
+dashboard/kpis & F & L & L \\
+\hline
+orders & F & L & L \\
+\hline
+products & F & L & R \\
+\hline
+stores & F & L & L \\
+\hline
+stores/analytics/** & F & L & L \\
+\hline
+analytics/customer-** & F & L & L \\
+\hline
+analytics/capacity-v3/** & F & L & L \\
+\hline
+analytics/peak-hours & F & F & X \\
+\hline
+kpis/global-store & F & L & L \\
+\hline
+products/kpi & F & L & L \\
+\hline
+products/trend & F & L & L \\
+\hline
+chart/time-periods/** & F & F & F \\
+\hline
+**/compare & F & L & L \\
+\hline
+**/export & F & L & L \\
+\hline
+ai/** & F & L & L \\
+\hline
+send-support-email & F & F & F \\
+\hline
+create-test-user & F & X & X \\
+\hline
+\end{longtable}
+\end{footnotesize}
+\end{center}
+
+\textbf{Roles:} HQ=HQ\_ADMIN, ST=STATE\_MANAGER, SH=STORE\_MANAGER
+
+\textbf{Access Types:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{F (Full)}: Complete access to all data across system
+    \item \textbf{L (Filtered)}: Role-based data filtering (state/store scope)
+    \item \textbf{R (Read-only)}: View access without modification rights
+    \item \textbf{X (Denied)}: Access blocked (403 Forbidden)
+\end{itemize}
+
+\textbf{Key Points:}
+\begin{itemize}[leftmargin=*]
+    \item All endpoints use \texttt{/api/v2/} prefix (abbreviated for space)
+    \item Filtering automatically applied based on user's assigned state/store
+    \item Export functions inherit same permissions as data endpoints
+    \item Peak hours restricted to management levels only
+    \item Support email and time utilities available to all roles
+\end{itemize}
+
+\vfill
+
+\begin{center}
+{\small \textcopyright{} 2025 PizzaWorld Technical Documentation}
+\end{center}
+
+\end{document} 

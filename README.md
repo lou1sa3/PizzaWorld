@@ -15,6 +15,8 @@ Contact: pizzaworldplus@gmail.com
 ## Demo Video
 [**PizzaWorld Dashboard Demo - Watch our comprehensive demo video showcasing features and capabilities**](https://www.youtube.com/watch?v=hr8LjElGZ5c)
 
+[**Email Service Demo - Watch our email support system demonstration**](https://www.youtube.com/watch?v=gkvtr3SErVA)
+
 ---
 
 ## Quick Start
@@ -78,15 +80,20 @@ The script automatically:
 ## Features Overview
 
 ### Backend (Spring Boot)
-- **RESTful API** with comprehensive endpoint coverage
-- **AI Assistant Integration** with Google Gemma AI
+- **RESTful API** with 90+ endpoints covering all business operations
+- **AI Assistant Integration** with Google Gemma AI and real-time streaming
 - **JWT Authentication** with role-based access control (RBAC)
 - **Spring Security** with custom authentication filter
 - **Supabase PostgreSQL Integration** with optimized native queries
-- **Materialized Views** for high-performance analytics
-- **Email System** with SMTP integration and support tickets
+- **Materialized Views** for high-performance analytics (15+ specialized views)
+- **Advanced Store Analytics** with individual store performance tracking
+- **Customer Analytics** including lifetime value and retention analysis
+- **Product Analytics** with trend analysis and comparison capabilities
+- **Revenue Analytics** with multi-dimensional filtering and time series
+- **Email Support System** with SMTP integration for customer support
 - **Knowledge Base** with document retrieval and contextual responses
-- **CSV Export** for all data tables with role-based filtering
+- **Comprehensive CSV Export** for all data views with role-based filtering
+- **Dynamic Filtering & Pagination** for large datasets
 - **Global Exception Handling** with meaningful error messages
 
 ### Frontend (Angular 19)
@@ -110,6 +117,57 @@ The script automatically:
 - **Role-based AI Responses** tailored to user permissions
 - **Intelligent Fallbacks** when AI is unavailable
 
+### Advanced Store Analytics
+- **Individual Store Performance** tracking with comprehensive KPIs
+- **Store Revenue Trends** with customizable time periods and comparisons
+- **Hourly Performance Analysis** for operational optimization
+- **Category Performance Tracking** by store location
+- **Daily Operations Monitoring** with efficiency metrics
+- **Customer Insights** per store including acquisition and retention
+- **Product Performance Analysis** by individual store
+- **Store Efficiency Metrics** including capacity utilization
+- **Comparative Analytics** between stores, states, and national averages
+- **Custom Date Range Analysis** with flexible time period selection
+
+### Customer Analytics & Intelligence
+- **Customer Lifetime Value (CLV)** analysis with segmentation
+- **Customer Retention Analysis** with cohort tracking
+- **Customer Acquisition Metrics** by location and time period
+- **Store Capacity Analysis** including peak hours identification
+- **Customer Distance Metrics** for delivery optimization
+- **Retention Rate Tracking** across different customer segments
+- **Purchase Pattern Analysis** for targeted marketing
+
+### Advanced Product Analytics
+- **Product Performance Tracking** with trend analysis
+- **Product KPI Analysis** including revenue, orders, and growth metrics
+- **Product Comparison Tools** for competitive analysis
+- **Revenue by Category** breakdown with filtering capabilities
+- **Product Trend Analysis** with customizable time intervals
+- **Launch Performance Tracking** for new products
+- **Category Performance Analytics** across all product lines
+- **Product Mix Analysis** by store and region
+
+### Data Export & Reporting
+- **Comprehensive CSV Export** for all analytics views and data tables
+- **Role-based Export Filtering** ensuring users only export permitted data
+- **Dashboard KPI Export** with summary metrics
+- **Store Performance Export** including all analytics and comparisons
+- **Product Performance Export** with trend analysis and comparisons
+- **Customer Analytics Export** including CLV and retention data
+- **Revenue Analytics Export** with time series and comparative data
+- **Orders Export** with advanced filtering and search capabilities
+- **Store Capacity Export** with utilization and efficiency metrics
+- **Custom Date Range Export** for any time period analysis
+- **Automated Export Processing** with optimized data formatting
+
+### Email Support System
+- **Customer Support Integration** with automated email processing
+- **Background Email Processing** for improved response times
+- **Support Ticket Management** with email notifications
+- **SMTP Integration** with Gmail for reliable delivery
+- **Error Handling & Logging** for support request tracking
+
 ## User Roles & Permissions
 
 | Role | Dashboard | Orders | Products | Stores | Analytics | Export | AI Assistant | Admin |
@@ -123,31 +181,147 @@ The script automatically:
 ### Authentication
 - `POST /api/login` - User authentication
 - `GET /api/me` - Current user information
+- `POST /api/logout` - User logout
+- `POST /api/create-test-user` - Create test user (development)
 
 ### Dashboard & Analytics
-- `GET /api/dashboard-kpis` - Main KPI metrics
-- `GET /api/recent-orders` - Recent order list
-- `GET /api/kpi/revenue-trend` - Revenue analytics
-- `GET /api/analytics/customer-lifetime-value` - CLV analysis
-- `GET /api/analytics/customer-retention` - Retention metrics
+- `GET /api/v2/dashboard/kpis` - Main KPI metrics
+- `GET /api/v2/dashboard/kpis/export` - Export dashboard KPIs to CSV
+- `GET /api/v2/orders/recent` - Recent order list
+- `GET /api/v2/analytics/revenue/by-year` - Annual revenue analytics
+- `GET /api/v2/analytics/revenue/by-month` - Monthly revenue analytics
+- `GET /api/v2/analytics/revenue/by-week` - Weekly revenue analytics
+- `GET /api/v2/analytics/revenue/by-store` - Revenue by store analytics
+- `GET /api/v2/analytics/store-performance` - Store performance metrics
+- `GET /api/v2/analytics/hourly-performance` - Hourly performance analytics
+- `GET /api/v2/analytics/hourly-performance/export` - Export hourly performance data
+- `GET /api/v2/analytics/product-performance` - Product performance analytics
+- `GET /api/v2/analytics/product-performance/export` - Export product performance data
+- `GET /api/v2/analytics/category-performance` - Category performance analytics
+- `GET /api/v2/analytics/daily-trends` - Daily revenue trends
+- `GET /api/v2/analytics/monthly-trends` - Monthly revenue trends
+- `GET /api/v2/analytics/store-comparison` - Store performance comparison
+- `GET /api/v2/analytics/state-comparison` - State revenue trends
+- `GET /api/v2/analytics/state-performance` - State performance analytics
+- `GET /api/v2/analytics/monthly-revenue-trends` - Monthly revenue trends by store
+
+### Store Analytics
+- `GET /api/v2/stores` - Store directory with role-based filtering
+- `GET /api/v2/stores/export` - Export stores to CSV
+- `GET /api/v2/stores/performance` - Store performance analytics
+- `GET /api/v2/stores/performance/export` - Export store performance to CSV
+- `GET /api/v2/stores/hourly-performance` - Aggregated hourly performance across stores
+- `GET /api/v2/stores/customer-acquisition` - Store customer acquisition metrics
+- `GET /api/v2/stores/product-mix` - Product mix analysis by store
+- `GET /api/v2/stores/weekly-trends` - Weekly performance trends
+- `GET /api/v2/stores/daily-operations` - Daily operations overview
+- `GET /api/v2/stores/efficiency-metrics` - Store efficiency metrics
+
+### Individual Store Analytics
+- `GET /api/v2/stores/{storeId}/analytics/overview` - Individual store overview
+- `GET /api/v2/stores/{storeId}/analytics/revenue-trends` - Store revenue trends
+- `GET /api/v2/stores/{storeId}/analytics/hourly-performance` - Store hourly performance
+- `GET /api/v2/stores/{storeId}/analytics/category-performance` - Store category performance
+- `GET /api/v2/stores/{storeId}/analytics/daily-operations` - Store daily operations
+- `GET /api/v2/stores/{storeId}/analytics/customer-insights` - Store customer insights
+- `GET /api/v2/stores/{storeId}/analytics/product-performance` - Store product performance
+- `GET /api/v2/stores/{storeId}/analytics/recent-orders` - Store recent orders
+- `GET /api/v2/stores/{storeId}/analytics/efficiency-metrics` - Store efficiency metrics
+- `GET /api/v2/stores/{storeId}/analytics/contextual-overview` - Enhanced contextual overview
+- `GET /api/v2/stores/{storeId}/analytics/enhanced-revenue-trends` - Enhanced revenue trends
+- `GET /api/v2/stores/{storeId}/analytics/enhanced-performance` - Enhanced performance metrics
+- `GET /api/v2/stores/{storeId}/analytics/custom-range` - Custom date range analytics
+- `POST /api/v2/stores/{storeId}/analytics/compare` - Compare analytics periods
+
+### Advanced Product Analytics
+- `GET /api/v2/products` - Product catalog with search and filtering
+- `GET /api/v2/products/export` - Export products to CSV
+- `GET /api/v2/products/top` - Top performing products
+- `GET /api/v2/products/top/export` - Export top products to CSV
+- `GET /api/v2/products/performance` - Product performance analytics
+- `GET /api/v2/products/performance/export` - Export product performance to CSV
+- `GET /api/v2/products/kpis` - Product KPIs with filtering
+- `GET /api/v2/products/revenue-by-category` - Revenue breakdown by category
+- `GET /api/v2/products/details/{sku}` - Product details by SKU
+
+### Individual Product Analytics
+- `GET /api/v2/products/kpi` - Individual product KPI analysis
+- `GET /api/v2/products/trend` - Product trend analysis
+- `GET /api/v2/products/trend/export` - Export product trend data to CSV
+- `GET /api/v2/products/compare` - Product comparison analysis
+- `GET /api/v2/products/revenue-trend` - Product revenue trend analysis
+
+### Product Chart Analytics
+- `GET /api/v2/products/overview-chart` - Products overview chart data
+- `GET /api/v2/products/overview-chart/custom-range` - Custom range overview chart
+- `POST /api/v2/products/overview-chart/compare` - Compare overview chart periods
+- `GET /api/v2/products/analytics/custom-range` - Custom range product analytics
+- `GET /api/v2/products/analytics/custom-range/export` - Export custom range analytics
+- `POST /api/v2/products/analytics/compare` - Compare product analytics periods
+- `POST /api/v2/products/analytics/compare/export` - Export analytics comparison
+
+### Customer Analytics
+- `GET /api/v2/analytics/customer-lifetime-value` - Customer lifetime value analysis
+- `GET /api/v2/analytics/customer-lifetime-value/summary` - CLV summary metrics
+- `GET /api/v2/analytics/customer-lifetime-value/export` - Export CLV data to CSV
+- `GET /api/v2/analytics/customer-retention` - Customer retention analysis
+- `GET /api/v2/analytics/customer-retention/export` - Export retention data to CSV
+- `GET /api/v2/analytics/customer-acquisition` - Customer acquisition analytics
+- `GET /api/v2/analytics/store-capacity` - Store capacity analysis (legacy)
+- `GET /api/v2/analytics/store-capacity/summary` - Store capacity summary (legacy)
+- `GET /api/v2/analytics/store-capacity/peak-hours` - Peak hours analysis (legacy)
+- `GET /api/v2/analytics/store-capacity/export` - Export capacity data to CSV (legacy)
+
+### Advanced Store Capacity Analytics (V3)
+- `GET /api/v2/analytics/store-capacity-v3/summary` - Enhanced store capacity summary
+- `GET /api/v2/analytics/store-capacity-v3/metrics` - Store capacity metrics
+- `GET /api/v2/analytics/store-capacity-v3/peak-hours` - Advanced peak hours analysis
+- `GET /api/v2/analytics/store-capacity-v3/customer-distance` - Customer distance metrics
+- `GET /api/v2/analytics/store-capacity-v3/delivery-metrics` - Delivery performance metrics
+- `GET /api/v2/analytics/store-capacity-v3/utilization-chart` - Store utilization chart data
+- `GET /api/v2/analytics/store-capacity-v3/export` - Export enhanced capacity data to CSV
+
+### Orders Management
+- `GET /api/v2/orders` - Orders with advanced filtering and pagination
+- `GET /api/v2/orders/export` - Export filtered orders to CSV
+- `GET /api/v2/orders/available-states` - Available states for filtering
+- `GET /api/v2/orders/kpis` - Orders KPIs with filtering
+
+### Global KPI Analytics
+- `GET /api/v2/kpis/global-store` - Global store KPIs from materialized views
+- `GET /api/v2/kpis/global-store/export` - Export global store KPIs to CSV
+
+### Revenue Analytics & Charts
+- `GET /api/v2/store-revenue-chart` - Store revenue chart data
+- `GET /api/v2/store-revenue-chart/export` - Export revenue chart to CSV
+- `GET /api/v2/store-revenue-chart/years` - Available years for charts
+- `GET /api/v2/store-revenue-chart/months` - Available months for charts
+- `GET /api/v2/chart/store-revenue` - Dynamic store revenue charts
+- `GET /api/v2/chart/store-revenue/date-range` - Revenue by custom date range
+- `GET /api/v2/chart/store-revenue/export` - Export chart data to CSV
+
+### Chart Time Period Utilities
+- `GET /api/v2/chart/time-periods/years` - Available years for time filtering
+- `GET /api/v2/chart/time-periods/months` - Available months for year
+- `GET /api/v2/chart/time-periods/quarters` - Available quarters for year
 
 ### AI Assistant
 - `POST /api/ai/chat` - AI chat interaction
 - `POST /api/ai/chat/stream` - Streaming AI responses
+- `GET /api/ai/chat/history/{sessionId}` - Get chat history
 - `POST /api/ai/analyze` - Natural language query analysis
 - `GET /api/ai/insights` - AI-generated business insights
+- `GET /api/ai/health` - AI service health check
+- `GET /api/ai/config` - Public AI configuration
 - `GET /api/ai/status` - AI system status
+- `POST /api/ai/test` - Test Google AI connection
 
-### Business Operations
-- `GET /api/orders` - Order management with filtering
-- `GET /api/products` - Product catalog
-- `GET /api/stores` - Store directory
-- `GET /api/customers` - Customer data
+### Email Support
+- `POST /api/send-support-email` - Send support email
 
-### Data Export
-- `GET /api/orders/export` - Orders CSV export
-- `GET /api/products/export` - Products CSV export
-- `GET /api/stores/export` - Stores CSV export
+### System Health
+- `GET /api/v2/health` - API health check
+- `GET /api/v2/profile` - User profile information
 
 ## Technology Stack
 
@@ -164,13 +338,15 @@ The script automatically:
 - **Java 17** - Runtime environment
 
 ### Frontend Technologies
-- **Angular 19** - SPA framework
-- **TypeScript 5.7** - Type-safe JavaScript
-- **RxJS 7.8** - Reactive programming
-- **Tailwind CSS 3.4** - Utility-first CSS
-- **PrimeNG 19** - UI component library
-- **ApexCharts 3.41** - Data visualization
-- **Angular Material 19** - Material Design components
+- **Angular 19.1.0** - SPA framework
+- **TypeScript 5.7.2** - Type-safe JavaScript
+- **RxJS 7.8.0** - Reactive programming
+- **Tailwind CSS 3.4.17** - Utility-first CSS
+- **PrimeNG 19.1.3** - UI component library
+- **ApexCharts 3.41.0** - Data visualization
+- **Angular Material 19.2.18** - Material Design components
+- **Chart.js 4.4.9** - Additional charting library
+- **D3 7.9.0** - Data visualization utilities
 
 ### AI & Integration
 - **Google Gemma AI** - Language model integration
