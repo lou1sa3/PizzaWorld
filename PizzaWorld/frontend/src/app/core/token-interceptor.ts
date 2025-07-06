@@ -16,13 +16,28 @@ export class TokenInterceptor implements HttpInterceptor {
     const token = this.auth.token;
     let apiReq = req;
 
+    // DEBUG: Log environment and request details
+    console.log('🔍 TokenInterceptor Debug:', {
+      originalUrl: req.url,
+      environmentApiUrl: environment.apiUrl,
+      environmentProduction: environment.production,
+      isApiCall: req.url.startsWith('/api/'),
+      hasApiUrl: !!environment.apiUrl
+    });
+
     // If the request is to our API and we have a base URL configured, prepend it
     if (req.url.startsWith('/api/') && environment.apiUrl) {
       const url = environment.apiUrl + req.url;
+      console.log(`🔄 TokenInterceptor: Redirecting ${req.url} to ${url}`);
       apiReq = req.clone({ url });
+    } else if (req.url.startsWith('/api/')) {
+      console.warn('⚠️ TokenInterceptor: API call detected but no apiUrl configured!', {
+        url: req.url,
+        apiUrl: environment.apiUrl
+      });
     }
 
-    // Don't log every request to reduce console noise
+    // Log every API request for debugging
     if (apiReq.url.includes('/api/')) {
       console.log(`🔐 TokenInterceptor: ${apiReq.method} ${apiReq.url} - Token: ${token ? 'Present' : 'Missing'}`);
     }
