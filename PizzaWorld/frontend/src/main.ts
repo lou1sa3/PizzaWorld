@@ -3,6 +3,7 @@ import { bootstrapApplication }  from '@angular/platform-browser';
 import { provideRouter }         from '@angular/router';
 import {
   provideHttpClient,
+  withInterceptorsFromDi,
   HTTP_INTERCEPTORS
 } from '@angular/common/http';
 import { importProvidersFrom }   from '@angular/core';
@@ -25,7 +26,7 @@ bootstrapApplication(AppComponent, {
   providers: [
     /* Basis-Provider */
     provideRouter(routes),
-    provideHttpClient(),
+    provideHttpClient(withInterceptorsFromDi()),
 
     /* Globale Interceptor-Registrierung */
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
