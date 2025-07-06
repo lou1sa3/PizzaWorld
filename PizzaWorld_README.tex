@@ -1,0 +1,496 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{amssymb}
+
+% Page geometry
+\geometry{
+    top=2.5cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm
+}
+
+% Hyperlink setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% Code listing setup
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red}
+}
+
+% Custom colors
+\definecolor{codebackground}{rgb}{0.95,0.95,0.95}
+\definecolor{green}{RGB}{0,128,0}
+\definecolor{orange}{RGB}{255,165,0}
+\definecolor{red}{RGB}{255,0,0}
+
+% Title formatting
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{PizzaWorld Dashboard}
+\fancyhead[R]{Academic Project}
+\fancyfoot[C]{\thepage}
+
+\begin{document}
+
+% Title page
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\bfseries PizzaWorld Dashboard}
+    
+    \vspace{1cm}
+    
+    {\Large A comprehensive business intelligence dashboard system for PizzaWorld with Spring Boot backend, Angular frontend, and AI-powered assistant capabilities}
+    
+    \vspace{2cm}
+    
+    {\large \textbf{Developed for the Programming Lab module in the Business Information Systems bachelor's program}}
+    
+    \vspace{3cm}
+    
+    \begin{tabular}{rl}
+        \textbf{Official Homepage:} & \href{https://www.pizzaworldplus.tech/}{https://www.pizzaworldplus.tech/} \\[0.3cm]
+        \textbf{Dashboard Access:} & \href{https://dashboard.pizzaworldplus.tech/}{https://dashboard.pizzaworldplus.tech/} \\[0.3cm]
+        \textbf{GitHub Repository:} & \href{https://github.com/luigids03/PizzaWorld}{https://github.com/luigids03/PizzaWorld} \\[0.3cm]
+        \textbf{Contact:} & pizzaworldplus@gmail.com
+    \end{tabular}
+    
+    \vspace{2cm}
+    
+    {\large \textbf{Demo Video}}\\
+    \href{https://www.youtube.com/watch?v=hr8LjElGZ5c}{\textbf{PizzaWorld Dashboard Demo - Watch our comprehensive demo video showcasing features and capabilities}}
+    
+    \vfill
+    
+    {\large \textcopyright{} 2025 PizzaWorld Dashboard - Academic Project}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Quick Start}
+
+\subsection{System Requirements}
+
+\begin{itemize}[leftmargin=*]
+    \item Java 17 or higher (OpenJDK or Oracle JDK)
+    \item Node.js 18 or higher
+    \item npm 9 or higher (included with Node.js)
+    \item Modern web browser (Chrome, Firefox, Safari, or Edge)
+    \item Operating System: Windows 10+, macOS 10.15+, or Linux
+\end{itemize}
+
+\textbf{Note:} PostgreSQL installation is not required - the application uses a pre-configured Supabase cloud database.
+
+\subsection{Security Implementation}
+
+This application demonstrates production-grade security practices:
+
+\begin{itemize}[leftmargin=*]
+    \item No hardcoded credentials in source code
+    \item All sensitive data loaded from environment variables
+    \item Application will not start without proper security configuration
+    \item Start scripts handle secure environment setup automatically
+    \item JWT-based authentication with role-based access control
+    \item BCrypt password hashing for secure credential storage
+    \item Google AI API key management for AI features
+\end{itemize}
+
+\textbf{Important:} Always use the provided start scripts. Direct execution will fail due to missing environment variables.
+
+\section{Installation and Startup}
+
+\subsection{Windows Instructions}
+
+\begin{lstlisting}[language=bash, caption=Windows Installation]
+# Clone the repository
+git clone https://github.com/luigids03/PizzaWorld.git
+cd PizzaWorld
+
+# Start both Backend and Frontend
+./start.bat
+\end{lstlisting}
+
+\subsection{macOS/Linux Instructions}
+
+\begin{lstlisting}[language=bash, caption=macOS/Linux Installation]
+# Clone the repository
+git clone https://github.com/luigids03/PizzaWorld.git
+cd PizzaWorld
+
+# Make script executable (first time only)
+chmod +x start.sh
+
+# Start both Backend and Frontend
+./start.sh
+\end{lstlisting}
+
+The script automatically:
+\begin{itemize}[leftmargin=*]
+    \item Sets all required environment variables securely
+    \item Configures JVM memory optimization (512MB-2GB)
+    \item Starts the Spring Boot backend (port 8080)
+    \item Starts the Angular frontend (port 4200)
+    \item Opens \href{http://localhost:4200}{http://localhost:4200} in your default browser
+\end{itemize}
+
+\section{Features Overview}
+
+\subsection{Backend (Spring Boot)}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{RESTful API} with comprehensive endpoint coverage
+    \item \textbf{AI Assistant Integration} with Google Gemma AI
+    \item \textbf{JWT Authentication} with role-based access control (RBAC)
+    \item \textbf{Spring Security} with custom authentication filter
+    \item \textbf{Supabase PostgreSQL Integration} with optimized native queries
+    \item \textbf{Materialized Views} for high-performance analytics
+    \item \textbf{Email System} with SMTP integration and support tickets
+    \item \textbf{Knowledge Base} with document retrieval and contextual responses
+    \item \textbf{CSV Export} for all data tables with role-based filtering
+    \item \textbf{Global Exception Handling} with meaningful error messages
+\end{itemize}
+
+\subsection{Frontend (Angular 19)}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Responsive Design} with Tailwind CSS
+    \item \textbf{Interactive Dashboards} with ApexCharts visualizations
+    \item \textbf{AI Chatbot Interface} with real-time streaming responses
+    \item \textbf{Real-time Updates} via efficient HTTP polling
+    \item \textbf{Role-based UI} with dynamic navigation
+    \item \textbf{Progressive Web App} capabilities
+    \item \textbf{TypeScript} for type safety
+    \item \textbf{Component Architecture} with lazy loading
+    \item \textbf{State Management} with RxJS
+\end{itemize}
+
+\subsection{AI \& Intelligence Features}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Google Gemma AI Integration} for intelligent responses
+    \item \textbf{Real-time Chat Streaming} using Server-Sent Events
+    \item \textbf{Business Context Integration} with live data
+    \item \textbf{Knowledge Base Retrieval} for contextual responses
+    \item \textbf{Natural Language Analytics} for business queries
+    \item \textbf{AI-generated Insights} based on business data
+    \item \textbf{Role-based AI Responses} tailored to user permissions
+    \item \textbf{Intelligent Fallbacks} when AI is unavailable
+\end{itemize}
+
+\section{User Roles \& Permissions}
+
+\begin{longtable}{|l|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{Role} & \textbf{D} & \textbf{O} & \textbf{P} & \textbf{S} & \textbf{A} & \textbf{E} & \textbf{AI} & \textbf{Ad} \\
+\hline
+\endhead
+\textbf{HQ\_ADMIN} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} \\
+\hline
+\textbf{STATE\_MANAGER} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{red}{\textbf{$\times$}} \\
+\hline
+\textbf{STORE\_MANAGER} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{orange}{\textbf{$\sim$}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{green}{\textbf{\checkmark}} & \textcolor{red}{\textbf{$\times$}} \\
+\hline
+\end{longtable}
+
+\textbf{Legend:}
+\begin{itemize}[leftmargin=1cm]
+    \item \textbf{D} = Dashboard Access
+    \item \textbf{O} = Orders Management  
+    \item \textbf{P} = Products Management
+    \item \textbf{S} = Stores Management
+    \item \textbf{A} = Analytics Access
+    \item \textbf{E} = Export Functionality
+    \item \textbf{AI} = AI Assistant Access
+    \item \textbf{Ad} = Admin Functions
+\end{itemize}
+
+\textbf{Permission Levels:}
+\begin{itemize}[leftmargin=1cm]
+    \item \textcolor{green}{\textbf{\checkmark}} = Full Access
+    \item \textcolor{orange}{\textbf{$\sim$}} = Limited Access (View Only)
+    \item \textcolor{red}{\textbf{$\times$}} = No Access
+\end{itemize}
+
+\textbf{Role Details:}
+\begin{itemize}[leftmargin=1cm]
+    \item \textbf{HQ\_ADMIN}: Complete system access including user management and full CRUD operations
+    \item \textbf{STATE\_MANAGER}: State-level data access with full view/edit permissions for products
+    \item \textbf{STORE\_MANAGER}: Store-level data access with view-only access for products
+\end{itemize}
+
+\section{API Endpoints}
+
+\subsection{Authentication}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{POST /api/login} - User authentication
+    \item \texttt{GET /api/me} - Current user information
+\end{itemize}
+
+\subsection{Dashboard \& Analytics}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/dashboard-kpis} - Main KPI metrics
+    \item \texttt{GET /api/recent-orders} - Recent order list
+    \item \texttt{GET /api/kpi/revenue-trend} - Revenue analytics
+    \item \texttt{GET /api/analytics/customer-lifetime-value} - CLV analysis
+    \item \texttt{GET /api/analytics/customer-retention} - Retention metrics
+\end{itemize}
+
+\subsection{AI Assistant}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{POST /api/ai/chat} - AI chat interaction
+    \item \texttt{POST /api/ai/chat/stream} - Streaming AI responses
+    \item \texttt{POST /api/ai/analyze} - Natural language query analysis
+    \item \texttt{GET /api/ai/insights} - AI-generated business insights
+    \item \texttt{GET /api/ai/status} - AI system status
+\end{itemize}
+
+\subsection{Business Operations}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/orders} - Order management with filtering
+    \item \texttt{GET /api/products} - Product catalog
+    \item \texttt{GET /api/stores} - Store directory
+    \item \texttt{GET /api/customers} - Customer data
+\end{itemize}
+
+\subsection{Data Export}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{GET /api/orders/export} - Orders CSV export
+    \item \texttt{GET /api/products/export} - Products CSV export
+    \item \texttt{GET /api/stores/export} - Stores CSV export
+\end{itemize}
+
+\section{Technology Stack}
+
+\subsection{Backend Technologies}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Spring Boot 3.4.6} - Application framework
+    \item \textbf{Spring Security 6} - Authentication \& authorization
+    \item \textbf{Spring Data JPA} - ORM layer
+    \item \textbf{Spring Mail} - Email integration
+    \item \textbf{Spring WebFlux} - Reactive programming for AI integration
+    \item \textbf{Supabase PostgreSQL} - Cloud database
+    \item \textbf{HikariCP} - Connection pooling
+    \item \textbf{JWT} - Authentication tokens
+    \item \textbf{Maven} - Build automation
+    \item \textbf{Java 17} - Runtime environment
+\end{itemize}
+
+\subsection{Frontend Technologies}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Angular 19} - SPA framework
+    \item \textbf{TypeScript 5.7} - Type-safe JavaScript
+    \item \textbf{RxJS 7.8} - Reactive programming
+    \item \textbf{Tailwind CSS 3.4} - Utility-first CSS
+    \item \textbf{PrimeNG 19} - UI component library
+    \item \textbf{ApexCharts 3.41} - Data visualization
+    \item \textbf{Angular Material 19} - Material Design components
+\end{itemize}
+
+\subsection{AI \& Integration}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Google Gemma AI} - Language model integration
+    \item \textbf{Server-Sent Events} - Real-time streaming
+    \item \textbf{WebClient} - HTTP client for AI API calls
+\end{itemize}
+
+\newpage
+
+\section{Configuration}
+
+\subsection{Environment Variables}
+
+The application requires the following environment variables for security:
+
+\begin{longtable}{|l|p{6cm}|c|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{Required} \\
+\hline
+\endhead
+\texttt{DB\_URL} & Supabase PostgreSQL connection URL & Yes \\
+\hline
+\texttt{DB\_USERNAME} & Database username & Yes \\
+\hline
+\texttt{DB\_PASSWORD} & Database password & Yes \\
+\hline
+\texttt{JWT\_SECRET} & Secret key for JWT signing & Yes \\
+\hline
+\texttt{GMAIL\_APP\_PASSWORD} & Gmail app password for email & Yes \\
+\hline
+\texttt{GOOGLE\_AI\_API\_KEY} & Google AI API key & Yes \\
+\hline
+\texttt{GOOGLE\_AI\_MODEL} & Google AI model name & No \\
+\hline
+\end{longtable}
+
+\textbf{Security Note:} All sensitive credentials are managed through environment variables and are never hardcoded in the source code.
+
+\subsection{Database Configuration}
+
+The application uses a \textbf{Supabase PostgreSQL} cloud database with:
+\begin{itemize}[leftmargin=*]
+    \item SSL/TLS encryption
+    \item Connection pooling (30 max connections)
+    \item Optimized queries with materialized views
+    \item Role-based data access control
+\end{itemize}
+
+\section{Deployment Options}
+
+\subsection{Local Development}
+\begin{lstlisting}[language=bash, caption=Local Development Commands]
+# Windows
+./start.bat
+
+# macOS/Linux
+./start.sh
+\end{lstlisting}
+
+\subsection{Docker Deployment}
+\begin{lstlisting}[language=bash, caption=Docker Deployment]
+# Build and run with Docker
+docker build -t pizzaworld-app .
+docker run -p 8080:8080 pizzaworld-app
+\end{lstlisting}
+
+\subsection{Cloud Deployment}
+The application includes configuration for Render.com cloud deployment with automatic environment setup.
+
+\section{Development}
+
+\subsection{Backend Development}
+\begin{lstlisting}[language=bash, caption=Backend Development Commands]
+# Run in development mode
+./mvnw spring-boot:run
+
+# Run tests
+./mvnw test
+
+# Build JAR
+./mvnw clean package
+\end{lstlisting}
+
+\subsection{Frontend Development}
+\begin{lstlisting}[language=bash, caption=Frontend Development Commands]
+# Development server with hot reload
+ng serve
+
+# Production build
+ng build --configuration production
+
+# Run unit tests
+ng test
+\end{lstlisting}
+
+\section{Troubleshooting}
+
+\subsection{Common Issues}
+
+\subsubsection{Backend won't start}
+\begin{itemize}[leftmargin=*]
+    \item Ensure using start scripts (\texttt{start.bat} / \texttt{start.sh})
+    \item Verify Java 17+ installed: \texttt{java -version}
+    \item Check environment variables are set
+\end{itemize}
+
+\subsubsection{Frontend compilation errors}
+\begin{itemize}[leftmargin=*]
+    \item Clear node\_modules: \texttt{rm -rf node\_modules package-lock.json}
+    \item Reinstall dependencies: \texttt{npm install}
+    \item Check Node.js version: \texttt{node -v} (should be 18+)
+\end{itemize}
+
+\subsubsection{AI features not working}
+\begin{itemize}[leftmargin=*]
+    \item Verify Google AI API key configuration
+    \item Check AI service status: \texttt{GET /api/ai/status}
+    \item Test AI connectivity: \texttt{POST /api/ai/test}
+\end{itemize}
+
+\section{Demo Data}
+
+The application includes comprehensive demo data:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{4 US States:} Arizona, California, Nevada, Utah
+    \item \textbf{52 Stores:} Distributed across states
+    \item \textbf{100,000+ Orders:} 3 years of historical data (2021-2023)
+    \item \textbf{25+ Products:} Various pizza types and sizes
+    \item \textbf{Performance Metrics:} Pre-calculated analytics
+\end{itemize}
+
+\section{Academic Context}
+
+This application was developed as part of the Programming Lab module in the Business Information Systems bachelor's program. It demonstrates:
+
+\subsection{Software Engineering}
+\begin{itemize}[leftmargin=*]
+    \item Clean architecture with separation of concerns
+    \item Design patterns (Repository, DTO, Factory, Strategy)
+    \item SOLID principles application
+    \item Comprehensive error handling and logging
+\end{itemize}
+
+\subsection{Full-Stack Development}
+\begin{itemize}[leftmargin=*]
+    \item RESTful API design and implementation
+    \item Single Page Application architecture
+    \item Responsive web design principles
+    \item State management with reactive programming
+\end{itemize}
+
+\subsection{Advanced Technologies}
+\begin{itemize}[leftmargin=*]
+    \item AI integration with Google Gemma
+    \item Real-time features with WebSocket and SSE
+    \item Cloud services and external API integration
+    \item Containerization with Docker
+\end{itemize}
+
+\subsection{Security \& Performance}
+\begin{itemize}[leftmargin=*]
+    \item JWT authentication with role-based access
+    \item Environment-based secure configuration
+    \item Database query optimization with materialized views
+    \item Caching strategies and performance monitoring
+\end{itemize}
+
+\vfill
+
+\begin{center}
+{\small \textcopyright{} 2025 PizzaWorld Dashboard - Academic Project}
+\end{center}
+
+\end{document} 
