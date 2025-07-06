@@ -1,0 +1,12 @@
+FROM eclipse-temurin:17-jdk-jammy
+
+WORKDIR /app
+
+# Copy everything
+COPY . .
+
+# Make mvnw executable and build
+RUN chmod +x ./mvnw && ./mvnw clean package -DskipTests
+
+# Find and run the JAR
+CMD ["sh", "-c", "java -jar $(find target -name '*.jar' | head -1)"] 

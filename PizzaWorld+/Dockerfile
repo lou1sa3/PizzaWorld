@@ -9,14 +9,23 @@ COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
 
+# Make mvnw executable
+RUN chmod +x ./mvnw
+
 # Copy the rest of the application source code
 COPY src ./src
 
 # Build the application. -DskipTests skips running tests.
 RUN ./mvnw clean package -DskipTests
 
+# List the target directory to debug
+RUN ls -la target/
+
+# Find the actual JAR file name in case it's different
+RUN find target/ -name "*.jar" -type f
+
 # Expose port 8080 to the outside world
 EXPOSE 8080
 
-# Run the JAR file
-CMD ["java", "-jar", "target/demo-0.0.1-SNAPSHOT.jar"] 
+# Run the JAR file with a more flexible approach
+CMD ["sh", "-c", "java -jar target/*.jar"] 
