@@ -6,6 +6,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
+import { environment } from '../../environments/environment';
 
 @Injectable()
 export class TokenInterceptor implements HttpInterceptor {
@@ -13,22 +14,29 @@ export class TokenInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = this.auth.token;
+    let apiReq = req;
+
+    // If the request is to our API and we have a base URL configured, prepend it
+    if (req.url.startsWith('/api/') && environment.apiUrl) {
+      const url = environment.apiUrl + req.url;
+      apiReq = req.clone({ url });
+    }
 
     // Don't log every request to reduce console noise
-    if (req.url.includes('/api/')) {
-      console.log(`🔐 TokenInterceptor: ${req.method} ${req.url} - Token: ${token ? 'Present' : 'Missing'}`);
+    if (apiReq.url.includes('/api/')) {
+      console.log(`🔐 TokenInterceptor: ${apiReq.method} ${apiReq.url} - Token: ${token ? 'Present' : 'Missing'}`);
     }
 
     // Add token if available
     if (token) {
-      req = req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
+      apiReq = apiReq.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
     }
 
-    return next.handle(req).pipe(
+    return next.handle(apiReq).pipe(
       catchError((error: HttpErrorResponse) => {
         // Handle authentication errors
         if (error.status === 401 || error.status === 403) {
-          console.error(`🔐 Authentication error (${error.status}): ${req.url}`);
+          console.error(`🔐 Authentication error (${error.status}): ${apiReq.url}`);
           console.error('Token may be expired or invalid. Logging out user.');
 
           // Clear invalid token and logout user
@@ -44,9 +52,9 @@ export class TokenInterceptor implements HttpInterceptor {
 
         // Handle other errors
         if (error.status >= 500) {
-          console.error(`🚨 Server error (${error.status}): ${req.url}`, error.message);
+          console.error(`🚨 Server error (${error.status}): ${apiReq.url}`, error.message);
         } else if (error.status >= 400) {
-          console.error(`⚠️ Client error (${error.status}): ${req.url}`, error.message);
+          console.error(`⚠️ Client error (${error.status}): ${apiReq.url}`, error.message);
         }
 
         return throwError(() => error);

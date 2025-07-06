@@ -1,17 +1,19 @@
 package pizzaworld.config;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+// import org.springframework.core.io.ClassPathResource;
+// import org.springframework.core.io.Resource;
+// import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.resource.PathResourceResolver;
+// import org.springframework.web.servlet.resource.PathResourceResolver;
 
-import java.io.IOException;
+// import java.io.IOException;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
+    // Static file serving is no longer needed as frontend is deployed separately
+    /*
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Serve static resources from classpath
@@ -39,4 +41,5 @@ public class WebConfig implements WebMvcConfigurer {
                     }
                 });
     }
+    */
 } 

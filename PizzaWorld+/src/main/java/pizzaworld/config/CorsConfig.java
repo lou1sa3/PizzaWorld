@@ -16,6 +16,7 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         
         // Allow specific origins (add your domain here)
+        // Note: https://*.onrender.com will allow both frontend and backend on Render
         configuration.setAllowedOriginPatterns(Arrays.asList(
             "http://localhost:*",
             "https://*.onrender.com",

@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: pizzaworld-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      - key: SERVER_PORT
+        value: 8080
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: pizzaworld-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SPRING_MAIL_HOST
+        sync: false
+      - key: SPRING_MAIL_PORT
+        sync: false
+      - key: SPRING_MAIL_USERNAME
+        sync: false
+      - key: SPRING_MAIL_PASSWORD
+        sync: false
+      - key: GOOGLE_AI_API_KEY
+        sync: false
+
+databases:
+  - name: pizzaworld-db
+    plan: free
+    databaseName: pizzaworld
+    user: pizzaworld 

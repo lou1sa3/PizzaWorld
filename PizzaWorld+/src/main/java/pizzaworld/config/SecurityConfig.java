@@ -62,7 +62,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/login", "/api/register", "/api/send-support-email", "/api/ai/health", "/api/ai/config").permitAll() // Explicitly permit login/register, contact form, and AI health/config
                         .requestMatchers("/api/**").authenticated() // Secure all other API endpoints
-                        .anyRequest().permitAll()) // Permit all other requests (for frontend assets)
+                        .anyRequest().denyAll()) // Deny all non-API requests since frontend is deployed separately
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .logout(logout -> logout.logoutUrl("/logout"));
