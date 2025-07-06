@@ -8,7 +8,7 @@
     "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "start:all": "concurrently \"npm start\" \"cd ../../PizzaWorld+ && .\\mvnw.cmd spring-boot:run\""
+    "start:all": "concurrently \"npm start\" \"cd ../../PizzaWorld && .\\mvnw.cmd spring-boot:run\""
   },
   "private": true,
   "dependencies": {

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: pizzaworld-backend
+    env: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      - key: SERVER_PORT
+        value: 8080 

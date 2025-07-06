@@ -4,7 +4,7 @@ FROM eclipse-temurin:17-jdk-jammy
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the Maven wrapper and the pom.xml file to download dependencies
+# Copy only backend-specific files
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
@@ -12,17 +12,14 @@ COPY pom.xml .
 # Make mvnw executable
 RUN chmod +x ./mvnw
 
-# Copy the rest of the application source code
+# Download dependencies first (for better Docker layer caching)
+RUN ./mvnw dependency:go-offline
+
+# Copy only the backend source code (exclude frontend directory)
 COPY src ./src
 
 # Build the application. -DskipTests skips running tests.
 RUN ./mvnw clean package -DskipTests
-
-# List the target directory to debug
-RUN ls -la target/
-
-# Find the actual JAR file name in case it's different
-RUN find target/ -name "*.jar" -type f
 
 # Expose port 8080 to the outside world
 EXPOSE 8080

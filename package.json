@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "PizzaWorld Dashboard - Full Stack Application",
   "scripts": {
-    "start:backend": "cd PizzaWorld+ && ./mvnw spring-boot:run",
-    "start:frontend": "cd PizzaWorld+/frontend && npm install && npm start",
-    "install:frontend": "cd PizzaWorld+/frontend && npm install"
+    "start:backend": "cd PizzaWorld && ./mvnw spring-boot:run",
+    "start:frontend": "cd PizzaWorld/frontend && npm install && npm start",
+    "install:frontend": "cd PizzaWorld/frontend && npm install"
   },
   "dependencies": {
     "apexcharts": "^3.41.0",

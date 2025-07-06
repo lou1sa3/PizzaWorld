@@ -40,7 +40,7 @@ The application uses a unified startup approach with automatic environment confi
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd PizzaWorld+
+cd PizzaWorld
 
 # Start both Backend and Frontend
 ./start.bat
@@ -57,7 +57,7 @@ The script automatically:
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd PizzaWorld+
+cd PizzaWorld
 
 # Make script executable (first time only)
 chmod +x start.sh
@@ -72,11 +72,11 @@ If you prefer manual setup or encounter issues:
 
 ```bash
 # Backend setup
-cd PizzaWorld+
+cd PizzaWorld
 ./mvnw clean install
 
 # Frontend setup
-cd PizzaWorld+/frontend
+cd PizzaWorld/frontend
 npm install
 
 
@@ -94,7 +94,7 @@ npm start
 ## ◆ Project Structure
 
 ```
-PizzaWorld+/
+PizzaWorld/
 ├── src/main/java/pizzaworld/          # Spring Boot Backend
 │   ├── controller/                    # REST API Controllers
 │   │   ├── AuthController.java        # Authentication endpoints
