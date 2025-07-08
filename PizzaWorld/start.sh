@@ -14,7 +14,7 @@ export JWT_SECRET="supergeheimerSchluessel123456789012345"
 export GMAIL_APP_PASSWORD="obcs zapk yyqb wedb"
 # Google AI Configuration for Local Testing
 export GOOGLE_AI_API_KEY="noapikeys"
-export GOOGLE_AI_MODEL="gemini-2.5-flash"
+export GOOGLE_AI_MODEL="gemma-3n-e4b-it"
 
 echo ""
 echo "   *     *     *     *     *     *     *   "

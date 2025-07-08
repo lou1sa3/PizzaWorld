@@ -13,7 +13,7 @@ set JWT_SECRET=supergeheimerSchluessel123456789012345
 set GMAIL_APP_PASSWORD=obcs zapk yyqb wedb
 REM Google AI Configuration for Local Testing
 set GOOGLE_AI_API_KEY=noapikeys
-set GOOGLE_AI_MODEL=gemini-2.5-flash
+set GOOGLE_AI_MODEL=gemma-3n-e4b-it
 
 echo.
 echo    *     *     *     *     *     *     *   
