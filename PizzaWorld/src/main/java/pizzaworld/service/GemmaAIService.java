@@ -45,8 +45,14 @@ public class GemmaAIService {
      * Generate AI response using Google Gemma/Gemini
      */
     public String generateResponse(String userMessage, User user, String category, Map<String, Object> businessContext) {
+        // Debug logging for production troubleshooting
+        logger.info("Google AI Debug: API key configured={}, length={}, model={}", 
+                   (apiKey != null && !apiKey.trim().isEmpty()), 
+                   apiKey != null ? apiKey.length() : 0, 
+                   model);
+        
         if (apiKey == null || apiKey.trim().isEmpty()) {
-            logger.warn("Google AI API key not configured, using fallback");
+            logger.error("Google AI API key is NULL or EMPTY - check GOOGLE_AI_API_KEY environment variable");
             return null; // Will trigger fallback to rule-based responses
         }
         
@@ -58,7 +64,7 @@ public class GemmaAIService {
             return cleanupResponse(response);
             
         } catch (Exception e) {
-            logger.error("Error calling Google AI: {} (key hidden)", e.getMessage(), e);
+            logger.error("Google AI API call failed: {}", e.getMessage(), e);
             return null; // Will trigger fallback
         }
     }
