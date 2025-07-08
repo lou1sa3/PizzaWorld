@@ -13,8 +13,8 @@ export DB_PASSWORD="PizzaWorld.2025"
 export JWT_SECRET="supergeheimerSchluessel123456789012345"
 export GMAIL_APP_PASSWORD="obcs zapk yyqb wedb"
 # Google AI Configuration for Local Testing
-export GOOGLE_AI_API_KEY="AIzaSyChBAaKN26OKY3itD03JiAEIq7J5GCWg-U"
-export GOOGLE_AI_MODEL="gemma-3n-e2b-it"
+export GOOGLE_AI_API_KEY="noapikeys"
+export GOOGLE_AI_MODEL="gemini-2.5-flash"
 
 echo ""
 echo "   *     *     *     *     *     *     *   "

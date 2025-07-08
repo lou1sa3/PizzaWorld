@@ -46,8 +46,8 @@ public class AIController {
             // Generate session ID if not provided
             String sessionId = request.sessionId != null ? request.sessionId : UUID.randomUUID().toString();
             
-            // Process the message
-            ChatMessage response = aiService.processChatMessage(sessionId, request.message, user);
+            // Process the message with DOM context
+            ChatMessage response = aiService.processChatMessage(sessionId, request.message, user, request.context);
             
             // Return response with session ID
             Map<String, Object> result = new HashMap<>();
@@ -83,7 +83,8 @@ public class AIController {
         ChatMessage aiMsg = aiService.processChatMessage(
                 request.sessionId != null ? request.sessionId : UUID.randomUUID().toString(),
                 request.message,
-                user);
+                user,
+                request.context);
 
         String answer = aiMsg.getMessage();
         if (answer == null) answer = "";
@@ -248,7 +249,8 @@ public class AIController {
             ChatMessage testResponse = aiService.processChatMessage(
                 "test_session_" + System.currentTimeMillis(),
                 "Hello, can you tell me you're powered by Google Gemma AI?",
-                user
+                user,
+                null
             );
             
             Map<String, Object> result = new HashMap<>();

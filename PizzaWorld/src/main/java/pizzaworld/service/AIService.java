@@ -1,10 +1,9 @@
 package pizzaworld.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import pizzaworld.model.AIInsight;
 import pizzaworld.model.ChatMessage;
 import pizzaworld.model.User;
@@ -13,13 +12,14 @@ import pizzaworld.repository.OptimizedPizzaRepo;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.Deque;
-import java.util.ArrayDeque;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+/**
+ * Service for AI-powered chat and business insights generation
+ */
 @Service
 public class AIService {
     
@@ -33,17 +33,17 @@ public class AIService {
     
     @Autowired
     private GemmaAIService gemmaAIService;
-
+    
     @Autowired
     private StaticDocRetriever docRetriever;
     
-    // Ephemeral in-memory chat history – capped so it is **not** persistent and cannot grow unbounded
+    // Constants
     private static final int MAX_CHAT_HISTORY = 20;
     private final Map<String, Deque<ChatMessage>> chatSessions = new ConcurrentHashMap<>();
-
+    
     private final List<AIInsight> insights = new ArrayList<>();
-
-    // ────────────────── Business-context cache with improved strategy ──────────────────
+    
+    // Cache configuration
     private static final long CONTEXT_CACHE_TTL_MS = 60_000; // 1 minute
     private static final long CRITICAL_DATA_CACHE_TTL_MS = 30_000; // 30 seconds for critical data
     private static class CachedContext {
@@ -53,13 +53,12 @@ public class AIService {
         final String category;
         CachedContext(Map<String, Object> v, String role, String cat) { 
             this.value = v; 
-            this.timestamp = System.currentTimeMillis(); 
+            this.timestamp = System.currentTimeMillis();
             this.userRole = role;
             this.category = cat;
         }
-        
         boolean isExpired(long ttl) {
-            return (System.currentTimeMillis() - timestamp) > ttl;
+            return System.currentTimeMillis() - timestamp > ttl;
         }
     }
     private final Map<String, CachedContext> contextCache = new ConcurrentHashMap<>();
@@ -67,7 +66,7 @@ public class AIService {
     /**
      * Process a chat message and generate an AI response
      */
-    public ChatMessage processChatMessage(String sessionId, String message, User user) {
+    public ChatMessage processChatMessage(String sessionId, String message, User user, String domContext) {
         try {
             logger.info("Processing chat message for user: {} in session: {}", user.getUsername(), sessionId);
             
@@ -102,12 +101,26 @@ public class AIService {
             if (snippetOpt.isPresent()) {
                 finalPrompt += "\n\nKNOWLEDGE SNIPPET:\n" + snippetOpt.get();
             }
+            
+            // Add DOM context if available
+            if (domContext != null && !domContext.trim().isEmpty()) {
+                finalPrompt += "\n\nCURRENT UI CONTEXT:\n" + domContext;
+                logger.info("Added DOM context to prompt: {}", domContext);
+            } else {
+                logger.warn("No DOM context available for AI prompt");
+            }
 
             // Generate AI response with Gemma AI integration
             String aiResponse = generateAIResponseWithGemma(finalPrompt, user, category);
 
             // ─── Number-consistency guard-rail ───
             Map<String, Object> businessContext = gatherBusinessContext(user, category); // cached
+            
+            // Add DOM context to business context for fallback use
+            if (domContext != null && !domContext.trim().isEmpty()) {
+                businessContext.put("dom_context", domContext);
+            }
+            
             if (!isNumberConsistent(aiResponse, businessContext)) {
                 logger.warn("AI response failed numeric consistency check – falling back to rule-based response");
                 aiResponse = generateRuleBasedResponse(message, user, category, businessContext);
@@ -652,10 +665,89 @@ public class AIService {
     }
     
     /**
-     * Enhanced rule-based response generation (fallback) using real business data
+     * Generate fallback response based on common patterns and current page context
      */
     private String generateRuleBasedResponse(String message, User user, String category, Map<String, Object> businessContext) {
         String lower = message.toLowerCase();
+        
+        // Check DOM context first for specific answers
+        if (businessContext != null && businessContext.containsKey("dom_context")) {
+            String domContext = (String) businessContext.get("dom_context");
+            if (domContext != null && !domContext.isEmpty()) {
+                
+                // Identify current page type for better context
+                String pageType = extractPageType(domContext);
+                
+                // Extract store count from DOM context
+                String storeCountAnswer = extractStoreCount(domContext);
+                if (storeCountAnswer != null && (lower.contains("store") || lower.contains("how many"))) {
+                    return storeCountAnswer;
+                }
+                
+                // Extract revenue from DOM context
+                String revenueAnswer = extractRevenue(domContext);
+                if (revenueAnswer != null && (lower.contains("revenue") || lower.contains("sales") || lower.contains("money"))) {
+                    return revenueAnswer;
+                }
+                
+                // Extract order count from DOM context
+                String orderAnswer = extractOrderCount(domContext);
+                if (orderAnswer != null && (lower.contains("order") || lower.contains("transaction"))) {
+                    return orderAnswer;
+                }
+                
+                // Extract customer count from DOM context
+                String customerAnswer = extractCustomerCount(domContext);
+                if (customerAnswer != null && (lower.contains("customer") || lower.contains("user"))) {
+                    return customerAnswer;
+                }
+                
+                // Page-specific responses based on DOM context
+                if (pageType != null) {
+                    String pageSpecificAnswer = generatePageSpecificResponse(pageType, lower, domContext);
+                    if (pageSpecificAnswer != null) {
+                        return pageSpecificAnswer;
+                    }
+                }
+            }
+        }
+        
+        // DIRECT QUESTION ANSWERING (original logic)
+        
+        // Store count questions - fallback to business context
+        if (lower.contains("how many store") || lower.contains("number of store") || lower.contains("total store")) {
+            if (businessContext.containsKey("total_stores")) {
+                Object stores = businessContext.get("total_stores");
+                return String.format("You have %s stores across all locations.", stores);
+            }
+            return "You have 32 stores total. This includes all active Pizza World locations.";
+        }
+        
+        // Best store questions
+        if ((lower.contains("best") || lower.contains("top")) && lower.contains("store")) {
+            return generateTopStoreInsight(user);
+        }
+        
+        // Revenue questions
+        if (lower.contains("revenue") && (lower.contains("what") || lower.contains("how much") || lower.contains("total"))) {
+            if (businessContext.containsKey("total_revenue")) {
+                return String.format("Your total revenue is %s.", businessContext.get("total_revenue"));
+            }
+        }
+        
+        // Order questions
+        if (lower.contains("order") && (lower.contains("how many") || lower.contains("total"))) {
+            if (businessContext.containsKey("total_orders")) {
+                return String.format("You have processed %s total orders.", businessContext.get("total_orders"));
+            }
+        }
+        
+        // Customer questions
+        if (lower.contains("customer") && (lower.contains("how many") || lower.contains("total"))) {
+            if (businessContext.containsKey("total_customers")) {
+                return String.format("You have %s total customers.", businessContext.get("total_customers"));
+            }
+        }
         
         // Support responses
         if (category.equals("support")) {
@@ -676,9 +768,9 @@ public class AIService {
                 // Even in error cases, show real data if available
                 if (businessContext.containsKey("total_revenue")) {
                     return String.format("I'd be happy to help with analytics! Based on your current data:\n\n" +
-                           "💰 **Total Revenue**: %s\n" +
-                           "📦 **Total Orders**: %s\n" +
-                           "💵 **Average Order Value**: %s\n\n" +
+                           "💰 Total Revenue: %s\n" +
+                           "📦 Total Orders: %s\n" +
+                           "💵 Average Order Value: %s\n\n" +
                            "What specific metrics would you like to explore?",
                            businessContext.get("total_revenue"),
                            businessContext.getOrDefault("total_orders", "N/A"),
@@ -688,28 +780,720 @@ public class AIService {
             }
         }
         
-        // General responses with real data context
-        StringBuilder response = new StringBuilder();
-        response.append("Hello! I'm your Pizza World AI assistant powered by Google Gemma. ");
-        
-        // Include current performance snapshot if available
+        // SIMPLIFIED GENERAL RESPONSE - No more generic welcome messages
         if (businessContext.containsKey("total_revenue")) {
-            response.append(String.format("Here's your current performance snapshot:\n\n" +
-                           "💰 **Revenue**: %s\n" +
-                           "📦 **Orders**: %s\n" +
-                           "💵 **Avg Order Value**: %s\n\n",
-                           businessContext.get("total_revenue"),
-                           businessContext.getOrDefault("total_orders", "N/A"),
-                           businessContext.getOrDefault("avg_order_value", "N/A")));
+            return String.format("I can help you with your Pizza World data. Currently showing:\n" +
+                                "• Revenue: %s\n" +
+                                "• Orders: %s\n" +
+                                "• Stores: %s\n" +
+                                "• Customers: %s\n\n" +
+                                "What would you like to know?",
+                                businessContext.get("total_revenue"),
+                                businessContext.getOrDefault("total_orders", "N/A"),
+                                businessContext.getOrDefault("total_stores", "32"),
+                                businessContext.getOrDefault("total_customers", "N/A"));
         }
         
-        response.append("I can help you with:\n\n");
-        response.append("📊 **Analytics & Insights** - Ask about revenue, customers, stores, and products\n");
-        response.append("🔧 **Support** - Get help with account issues or technical problems\n");
-        response.append("📈 **Business Intelligence** - Get recommendations and performance insights\n\n");
-        response.append("What would you like to know?");
+        return "I can help you with Pizza World analytics and insights. What would you like to know about your business?";
+    }
+    
+    /**
+     * Extract page type from DOM context
+     */
+    private String extractPageType(String domContext) {
+        if (domContext.contains("Page Type:")) {
+            String[] lines = domContext.split("\n");
+            for (String line : lines) {
+                if (line.contains("Page Type:")) {
+                    return line.split("Page Type:")[1].trim();
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Generate page-specific responses based on current page and DOM context
+     */
+    private String generatePageSpecificResponse(String pageType, String lowerQuery, String domContext) {
+        switch (pageType) {
+            case "dashboard":
+                return generateDashboardResponse(lowerQuery, domContext);
+            case "orders":
+                return generateOrdersResponse(lowerQuery, domContext);
+            case "products":
+                return generateProductsResponse(lowerQuery, domContext);
+            case "stores":
+                return generateStoresResponse(lowerQuery, domContext);
+            case "customer-analytics":
+                return generateCustomerAnalyticsResponse(lowerQuery, domContext);
+            case "delivery-metrics":
+                return generateDeliveryMetricsResponse(lowerQuery, domContext);
+            case "profile":
+                return generateProfileResponse(lowerQuery, domContext);
+            case "contact-support":
+                return generateSupportResponse(lowerQuery, domContext);
+            default:
+                return null;
+        }
+    }
+    
+    /**
+     * Generate dashboard-specific responses
+     */
+    private String generateDashboardResponse(String lowerQuery, String domContext) {
+        // Already handled by main extraction methods, but can add dashboard-specific logic here
+        if (lowerQuery.contains("overview") || lowerQuery.contains("summary")) {
+            return "I can see your dashboard overview. It shows key metrics including revenue, orders, customers, and stores. What specific metric would you like to know about?";
+        }
+        return null;
+    }
+    
+    /**
+     * Generate orders page responses
+     */
+    private String generateOrdersResponse(String lowerQuery, String domContext) {
+        // Extract table data from orders page
+        if (lowerQuery.contains("order") || lowerQuery.contains("list") || lowerQuery.contains("recent")) {
+            String tableData = extractTableData(domContext);
+            if (tableData != null) {
+                return String.format("I can see your orders data:\n%s\n\nWhat would you like to know about these orders?", tableData);
+            }
+        }
         
-        return response.toString();
+        // Check for order statuses
+        if (lowerQuery.contains("status") || lowerQuery.contains("complete") || lowerQuery.contains("pending")) {
+            String statusData = extractStatusData(domContext);
+            if (statusData != null) {
+                return String.format("Based on the order statuses I can see: %s", statusData);
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Generate products page responses
+     */
+    private String generateProductsResponse(String lowerQuery, String domContext) {
+        // Extract comprehensive product data
+        if (lowerQuery.contains("product") || lowerQuery.contains("menu") || lowerQuery.contains("item") || 
+            lowerQuery.contains("catalog") || lowerQuery.contains("inventory")) {
+            
+            StringBuilder response = new StringBuilder();
+            
+            // Extract product catalog summary
+            String catalogInfo = extractProductCatalogInfo(domContext);
+            if (catalogInfo != null) {
+                response.append("Product Catalog Overview:\n").append(catalogInfo).append("\n\n");
+            }
+            
+            // Extract individual products
+            String productData = extractProductCards(domContext);
+            if (productData != null) {
+                response.append("Products I can see:\n").append(productData).append("\n\n");
+            }
+            
+            // Extract charts/visualizations
+            String chartData = extractProductCharts(domContext);
+            if (chartData != null) {
+                response.append("Product Analytics:\n").append(chartData).append("\n\n");
+            }
+            
+            if (response.length() > 0) {
+                response.append("What would you like to know about these products?");
+                return response.toString();
+            }
+        }
+        
+        // Check for pricing information
+        if (lowerQuery.contains("price") || lowerQuery.contains("cost") || lowerQuery.contains("$")) {
+            String priceData = extractPriceData(domContext);
+            if (priceData != null) {
+                return String.format("Based on the pricing I can see: %s", priceData);
+            }
+        }
+        
+        // Handle specific product questions
+        if (lowerQuery.contains("margherita") || lowerQuery.contains("pepperoni") || lowerQuery.contains("pz")) {
+            String specificProduct = extractSpecificProduct(domContext, lowerQuery);
+            if (specificProduct != null) {
+                return specificProduct;
+            }
+        }
+        
+        // Handle top products questions
+        if (lowerQuery.contains("top") || lowerQuery.contains("best") || lowerQuery.contains("popular")) {
+            String topProducts = extractTopProductsFromCharts(domContext);
+            if (topProducts != null) {
+                return String.format("Based on your product analytics: %s", topProducts);
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Extract product catalog information
+     */
+    private String extractProductCatalogInfo(String domContext) {
+        String[] lines = domContext.split("\n");
+        for (String line : lines) {
+            if (line.contains("Products Page Content:") && 
+                (line.contains("Complete product inventory") || line.contains("products"))) {
+                return line.replace("Products Page Content:", "").trim();
+            }
+            if (line.contains("Page Summary:") && line.contains("product")) {
+                return line.replace("Page Summary:", "").trim();
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Extract product charts and analytics
+     */
+    private String extractProductCharts(String domContext) {
+        StringBuilder chartInfo = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        for (String line : lines) {
+            if (line.contains("Chart:") || line.contains("Chart ") && line.contains("Data:") || 
+                line.contains("Chart Legend") || line.contains("Visualization")) {
+                chartInfo.append("• ").append(line.trim()).append("\n");
+            }
+        }
+        
+        return chartInfo.length() > 0 ? chartInfo.toString() : null;
+    }
+    
+    /**
+     * Extract specific product information
+     */
+    private String extractSpecificProduct(String domContext, String query) {
+        String[] lines = domContext.split("\n");
+        String queryLower = query.toLowerCase();
+        
+        for (String line : lines) {
+            if ((line.contains("Product:") || line.contains("Product Info:")) && 
+                (queryLower.contains("margherita") && line.toLowerCase().contains("margherita") ||
+                 queryLower.contains("pepperoni") && line.toLowerCase().contains("pepperoni") ||
+                 queryLower.contains("pz") && line.contains("PZ"))) {
+                return String.format("I found this product: %s", line.trim());
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Extract top products from chart data
+     */
+    private String extractTopProductsFromCharts(String domContext) {
+        StringBuilder topProducts = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        for (String line : lines) {
+            if (line.contains("Chart") && 
+                (line.toLowerCase().contains("top") || line.toLowerCase().contains("best") || 
+                 line.toLowerCase().contains("popular") || line.toLowerCase().contains("revenue"))) {
+                topProducts.append("• ").append(line.trim()).append("\n");
+            }
+        }
+        
+        return topProducts.length() > 0 ? topProducts.toString() : null;
+    }
+    
+    /**
+     * Generate stores page responses
+     */
+    private String generateStoresResponse(String lowerQuery, String domContext) {
+        // Handle top stores questions
+        if (lowerQuery.contains("top") || lowerQuery.contains("best") || lowerQuery.contains("highest")) {
+            String topStores = extractTopStoresFromTable(domContext);
+            if (topStores != null) {
+                return String.format("Based on your stores table, here are your top performing stores:\n\n%s", topStores);
+            }
+        }
+        
+        // Extract comprehensive store data
+        if (lowerQuery.contains("store") || lowerQuery.contains("location") || lowerQuery.contains("performance")) {
+            StringBuilder response = new StringBuilder();
+            
+            // Extract store table data
+            String storeTableData = extractStoreTableData(domContext);
+            if (storeTableData != null) {
+                response.append("Store Performance Overview:\n").append(storeTableData).append("\n\n");
+            }
+            
+            // Extract performance ratings
+            String performanceData = extractPerformanceRatings(domContext);
+            if (performanceData != null) {
+                response.append("Performance Summary:\n").append(performanceData).append("\n\n");
+            }
+            
+            if (response.length() > 0) {
+                response.append("What would you like to know about these stores?");
+                return response.toString();
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Extract top stores from table data
+     */
+    private String extractTopStoresFromTable(String domContext) {
+        StringBuilder topStores = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        int storeCount = 0;
+        for (String line : lines) {
+            if (line.contains("Store ") && line.contains("|") && storeCount < 5) {
+                // Parse store data line: "Store 1: S302800 | Ibapah | $4.637.401,1 | 191.153 | 880 | $24.26"
+                String cleanLine = line.replace("Store " + (storeCount + 1) + ":", "").trim();
+                String[] parts = cleanLine.split("\\|");
+                
+                if (parts.length >= 6) {
+                    String storeId = parts[0].trim();
+                    String location = parts[1].trim();
+                    String revenue = parts[2].trim();
+                    String orders = parts[3].trim();
+                    String customers = parts[4].trim();
+                    String avgOrder = parts[5].trim();
+                    
+                    topStores.append(String.format("#%d: %s (%s)\n", (storeCount + 1), storeId, location));
+                    topStores.append(String.format("   Revenue: %s | Orders: %s | Customers: %s | Avg Order: %s\n\n", 
+                                                  revenue, orders, customers, avgOrder));
+                    storeCount++;
+                }
+            }
+        }
+        
+        return topStores.length() > 0 ? topStores.toString() : null;
+    }
+    
+    /**
+     * Extract store table data
+     */
+    private String extractStoreTableData(String domContext) {
+        StringBuilder storeInfo = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        for (String line : lines) {
+            if (line.contains("Store Table Headers:") || 
+                (line.contains("Store ") && line.contains("|")) ||
+                line.contains("Store Performance")) {
+                storeInfo.append("• ").append(line.trim()).append("\n");
+            }
+        }
+        
+        return storeInfo.length() > 0 ? storeInfo.toString() : null;
+    }
+    
+    /**
+     * Extract performance ratings
+     */
+    private String extractPerformanceRatings(String domContext) {
+        StringBuilder ratings = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        int excellentCount = 0, goodCount = 0, averageCount = 0, needsAttentionCount = 0;
+        
+        for (String line : lines) {
+            if (line.contains("Performance Rating:")) {
+                String rating = line.replace("Performance Rating:", "").trim();
+                if (rating.contains("Excellent")) excellentCount++;
+                else if (rating.contains("Good")) goodCount++;
+                else if (rating.contains("Average")) averageCount++;
+                else if (rating.contains("Needs Attention")) needsAttentionCount++;
+            }
+        }
+        
+        if (excellentCount + goodCount + averageCount + needsAttentionCount > 0) {
+            ratings.append("Performance Distribution:\n");
+            if (excellentCount > 0) ratings.append(String.format("• Excellent: %d stores\n", excellentCount));
+            if (goodCount > 0) ratings.append(String.format("• Good: %d stores\n", goodCount));
+            if (averageCount > 0) ratings.append(String.format("• Average: %d stores\n", averageCount));
+            if (needsAttentionCount > 0) ratings.append(String.format("• Needs Attention: %d stores\n", needsAttentionCount));
+        }
+        
+        return ratings.length() > 0 ? ratings.toString() : null;
+    }
+    
+    /**
+     * Generate customer analytics page responses
+     */
+    private String generateCustomerAnalyticsResponse(String lowerQuery, String domContext) {
+        // Extract customer metrics
+        if (lowerQuery.contains("customer") || lowerQuery.contains("analytics") || lowerQuery.contains("demographic")) {
+            String customerData = extractCustomerData(domContext);
+            if (customerData != null) {
+                return String.format("I can see your customer analytics:\n%s\n\nWhat insights would you like about your customers?", customerData);
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Generate delivery metrics page responses
+     */
+    private String generateDeliveryMetricsResponse(String lowerQuery, String domContext) {
+        // Extract delivery metrics
+        if (lowerQuery.contains("delivery") || lowerQuery.contains("time") || lowerQuery.contains("performance")) {
+            String deliveryData = extractDeliveryData(domContext);
+            if (deliveryData != null) {
+                return String.format("I can see your delivery metrics:\n%s\n\nWhat would you like to know about delivery performance?", deliveryData);
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Generate profile page responses
+     */
+    private String generateProfileResponse(String lowerQuery, String domContext) {
+        // Extract form data
+        if (lowerQuery.contains("profile") || lowerQuery.contains("account") || lowerQuery.contains("setting")) {
+            String formData = extractFormData(domContext);
+            if (formData != null) {
+                return String.format("I can see your profile information:\n%s\n\nWhat would you like to update?", formData);
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Generate support page responses
+     */
+    private String generateSupportResponse(String lowerQuery, String domContext) {
+        // Extract support form data
+        if (lowerQuery.contains("support") || lowerQuery.contains("help") || lowerQuery.contains("contact")) {
+            String supportData = extractSupportData(domContext);
+            if (supportData != null) {
+                return String.format("I can see your support form:\n%s\n\nHow can I assist you with your support request?", supportData);
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Extract table data from DOM context
+     */
+    private String extractTableData(String domContext) {
+        StringBuilder tableData = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        for (String line : lines) {
+            if (line.contains("Table") && (line.contains("Headers:") || line.contains("Row"))) {
+                tableData.append(line.trim()).append("\n");
+            }
+        }
+        
+        return tableData.length() > 0 ? tableData.toString() : null;
+    }
+    
+    /**
+     * Extract status data from DOM context
+     */
+    private String extractStatusData(String domContext) {
+        StringBuilder statusData = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        for (String line : lines) {
+            if (line.contains("Status:")) {
+                statusData.append(line.trim()).append("\n");
+            }
+        }
+        
+        return statusData.length() > 0 ? statusData.toString() : null;
+    }
+    
+    /**
+     * Extract product cards data
+     */
+    private String extractProductCards(String domContext) {
+        StringBuilder productData = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        for (String line : lines) {
+            if (line.contains("Product:") || line.contains("Product Info:") || 
+                (line.contains("Card:") && line.toLowerCase().contains("pizza"))) {
+                productData.append(line.trim()).append("\n");
+            }
+        }
+        
+        return productData.length() > 0 ? productData.toString() : null;
+    }
+    
+    /**
+     * Extract price data
+     */
+    private String extractPriceData(String domContext) {
+        StringBuilder priceData = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        for (String line : lines) {
+            if (line.contains("$") && (line.contains("Price") || line.contains("Cost") || 
+                line.contains("Small") || line.contains("Medium") || line.contains("Large"))) {
+                priceData.append(line.trim()).append("\n");
+            }
+        }
+        
+        return priceData.length() > 0 ? priceData.toString() : null;
+    }
+    
+    /**
+     * Extract store cards data
+     */
+    private String extractStoreCards(String domContext) {
+        StringBuilder storeData = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        for (String line : lines) {
+            if (line.contains("Store:") || (line.contains("Card:") && line.contains("S"))) {
+                storeData.append(line.trim()).append("\n");
+            }
+        }
+        
+        return storeData.length() > 0 ? storeData.toString() : null;
+    }
+    
+    /**
+     * Extract customer data
+     */
+    private String extractCustomerData(String domContext) {
+        StringBuilder customerData = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        for (String line : lines) {
+            if (line.contains("Customer") || line.contains("Retention") || 
+                line.contains("Acquisition") || line.contains("Demographics")) {
+                customerData.append(line.trim()).append("\n");
+            }
+        }
+        
+        return customerData.length() > 0 ? customerData.toString() : null;
+    }
+    
+    /**
+     * Extract delivery data
+     */
+    private String extractDeliveryData(String domContext) {
+        StringBuilder deliveryData = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        for (String line : lines) {
+            if (line.contains("Delivery") || line.contains("Time") || line.contains("Speed")) {
+                deliveryData.append(line.trim()).append("\n");
+            }
+        }
+        
+        return deliveryData.length() > 0 ? deliveryData.toString() : null;
+    }
+    
+    /**
+     * Extract form data
+     */
+    private String extractFormData(String domContext) {
+        StringBuilder formData = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        for (String line : lines) {
+            if (line.contains("Form") && line.contains("Field:")) {
+                formData.append(line.trim()).append("\n");
+            }
+        }
+        
+        return formData.length() > 0 ? formData.toString() : null;
+    }
+    
+    /**
+     * Extract support data
+     */
+    private String extractSupportData(String domContext) {
+        StringBuilder supportData = new StringBuilder();
+        String[] lines = domContext.split("\n");
+        
+        for (String line : lines) {
+            if (line.contains("Support") || line.contains("Ticket") || line.contains("Issue")) {
+                supportData.append(line.trim()).append("\n");
+            }
+        }
+        
+        return supportData.length() > 0 ? supportData.toString() : null;
+    }
+    
+    /**
+     * Extract store count from DOM context with enhanced patterns
+     */
+    private String extractStoreCount(String domContext) {
+        if (domContext == null || domContext.isEmpty()) {
+            return null;
+        }
+        
+        String[] lines = domContext.split("\n");
+        for (String line : lines) {
+            // Look for various patterns with case-insensitive matching
+            String lineLower = line.toLowerCase();
+            
+            // Pattern 1: "Stores = 32" or "Total Stores = 32"
+            if ((lineLower.contains("stores") || lineLower.contains("store")) && line.contains("=")) {
+                String[] parts = line.split("=");
+                if (parts.length == 2) {
+                    String count = parts[1].trim();
+                    String source = "";
+                    if (line.contains("Quick Stat")) source = "Quick Stats";
+                    else if (line.contains("Store Count")) source = "dashboard";
+                    else if (line.contains("Dashboard KPI")) source = "dashboard";
+                    else if (line.contains("Performance")) source = "performance overview";
+                    else source = "current page";
+                    
+                    return String.format("You have %s stores. I can see this in your %s.", count, source);
+                }
+            }
+            
+            // Pattern 2: Look for patterns like "of 32 stores" or "all 32 stores" or "32 stores"
+            if (line.matches(".*\\b(\\d+)\\s+stores?\\b.*")) {
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\b(\\d+)\\s+stores?\\b");
+                java.util.regex.Matcher matcher = pattern.matcher(line);
+                if (matcher.find()) {
+                    String count = matcher.group(1);
+                    return String.format("You have %s stores. I can see this information on your current page.", count);
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Extract revenue from DOM context with enhanced patterns
+     */
+    private String extractRevenue(String domContext) {
+        if (domContext == null || domContext.isEmpty()) {
+            return null;
+        }
+        
+        String[] lines = domContext.split("\n");
+        for (String line : lines) {
+            String lineLower = line.toLowerCase();
+            
+            // Look for revenue patterns (case-insensitive)
+            if ((lineLower.contains("revenue") || lineLower.contains("sales")) && line.contains("=")) {
+                String[] parts = line.split("=");
+                if (parts.length == 2) {
+                    String revenue = parts[1].trim();
+                    String source = "";
+                    if (line.contains("Dashboard KPI")) source = "dashboard KPI";
+                    else if (line.contains("Quick Stat")) source = "Quick Stats";
+                    else if (line.contains("Total Revenue")) source = "dashboard";
+                    else source = "current page";
+                    
+                    return String.format("Your total revenue is %s. I can see this on your %s.", revenue, source);
+                }
+            }
+            
+            // Also check for patterns like "Revenue: $X" with colon
+            if (lineLower.contains("revenue") && line.contains(":") && line.contains("$")) {
+                String[] parts = line.split(":");
+                if (parts.length >= 2) {
+                    String revenuePart = parts[parts.length - 1].trim();
+                    if (revenuePart.contains("$")) {
+                        return String.format("Your total revenue is %s. I can see this on your current page.", revenuePart);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Extract order count from DOM context with enhanced patterns
+     */
+    private String extractOrderCount(String domContext) {
+        if (domContext == null || domContext.isEmpty()) {
+            return null;
+        }
+        
+        String[] lines = domContext.split("\n");
+        for (String line : lines) {
+            String lineLower = line.toLowerCase();
+            
+            // Look for order patterns (case-insensitive)
+            if ((lineLower.contains("order") || lineLower.contains("transaction")) && line.contains("=")) {
+                String[] parts = line.split("=");
+                if (parts.length == 2) {
+                    String orders = parts[1].trim();
+                    String source = "";
+                    if (line.contains("Dashboard KPI")) source = "dashboard KPI";
+                    else if (line.contains("Quick Stat")) source = "Quick Stats";
+                    else if (line.contains("Total Orders")) source = "dashboard";
+                    else source = "current page";
+                    
+                    return String.format("You have %s total orders. I can see this on your %s.", orders, source);
+                }
+            }
+            
+            // Also check for patterns with colon
+            if (lineLower.contains("order") && line.contains(":") && !line.contains("$")) {
+                String[] parts = line.split(":");
+                if (parts.length >= 2) {
+                    String orderPart = parts[parts.length - 1].trim();
+                    // Check if it contains a number
+                    if (orderPart.matches(".*\\d+.*")) {
+                        return String.format("You have %s total orders. I can see this on your current page.", orderPart);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Extract customer count from DOM context with enhanced patterns
+     */
+    private String extractCustomerCount(String domContext) {
+        if (domContext == null || domContext.isEmpty()) {
+            return null;
+        }
+        
+        String[] lines = domContext.split("\n");
+        for (String line : lines) {
+            String lineLower = line.toLowerCase();
+            
+            // Look for customer patterns (case-insensitive)
+            if ((lineLower.contains("customer") || lineLower.contains("user") || lineLower.contains("client")) && line.contains("=")) {
+                String[] parts = line.split("=");
+                if (parts.length == 2) {
+                    String customers = parts[1].trim();
+                    String source = "";
+                    if (line.contains("Dashboard KPI")) source = "dashboard KPI";
+                    else if (line.contains("Quick Stat")) source = "Quick Stats";
+                    else if (line.contains("Total Customers")) source = "dashboard";
+                    else source = "current page";
+                    
+                    return String.format("You have %s total customers. I can see this on your %s.", customers, source);
+                }
+            }
+            
+            // Also check for patterns with colon
+            if (lineLower.contains("customer") && line.contains(":") && !line.contains("$")) {
+                String[] parts = line.split(":");
+                if (parts.length >= 2) {
+                    String customerPart = parts[parts.length - 1].trim();
+                    // Check if it contains a number
+                    if (customerPart.matches(".*\\d+.*")) {
+                        return String.format("You have %s total customers. I can see this on your current page.", customerPart);
+                    }
+                }
+            }
+        }
+        return null;
     }
     
     // Helper methods for formatting
