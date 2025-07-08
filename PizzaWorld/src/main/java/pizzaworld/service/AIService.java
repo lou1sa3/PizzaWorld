@@ -35,6 +35,9 @@ public class AIService {
     private GemmaAIService gemmaAIService;
     
     @Autowired
+    private DeepSeekAIService deepSeekAIService;
+    
+    @Autowired
     private StaticDocRetriever docRetriever;
     
     // Constants
@@ -158,7 +161,17 @@ public class AIService {
             // Gather business context for the AI
             Map<String, Object> businessContext = gatherBusinessContext(user, category);
             
-            // Try Gemma AI first
+            // Try DeepSeek via OpenRouter first if configured
+            if (deepSeekAIService != null && deepSeekAIService.isAvailable()) {
+                logger.info("Using DeepSeek (OpenRouter) for response generation");
+                String deepResponse = deepSeekAIService.generateResponse(message, user, category, businessContext);
+                if (deepResponse != null && !deepResponse.trim().isEmpty()) {
+                    return deepResponse;
+                }
+                logger.warn("DeepSeek returned empty response, falling back to Gemma/Rule-based");
+            }
+            
+            // Proceed with Gemma if available
             if (gemmaAIService.isAvailable()) {
                 logger.info("Using Gemma AI for response generation");
                 String gemmaResponse = gemmaAIService.generateResponse(message, user, category, businessContext);
@@ -1594,7 +1607,9 @@ public class AIService {
     public Map<String, Object> getAIStatus() {
         Map<String, Object> status = new HashMap<>();
         status.put("gemma_available", gemmaAIService.isAvailable());
+        status.put("deepseek_available", deepSeekAIService.isAvailable());
         status.put("gemma_config", gemmaAIService.getConfigInfo());
+        status.put("deepseek_config", deepSeekAIService.getConfigInfo());
         status.put("fallback_enabled", true);
         return status;
     }
