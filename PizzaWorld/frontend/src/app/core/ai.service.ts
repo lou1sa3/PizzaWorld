@@ -95,6 +95,7 @@ export class AIService {
 
   /**
    * Send a chat message to the AI assistant
+   * The AI has access to frontend elements and can reference current UI state
    */
   sendMessage(message: string, context?: string): Observable<ChatMessage> {
     const request = {
@@ -124,6 +125,7 @@ export class AIService {
 
   /**
    * Send a chat message and receive streaming tokens via text/event-stream.
+   * The AI has access to frontend elements and can reference current UI state
    */
   sendMessageStream(message: string, context?: string): Observable<string> {
     const token = localStorage.getItem('authToken');
@@ -131,7 +133,7 @@ export class AIService {
     const requestBody = {
       sessionId: this.currentSessionId,
       message,
-      context
+      context: context || ''
     };
 
     const headers: any = {
