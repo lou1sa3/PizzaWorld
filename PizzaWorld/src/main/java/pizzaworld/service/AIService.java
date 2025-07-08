@@ -163,11 +163,13 @@ public class AIService {
                 logger.info("Using Gemma AI for response generation");
                 String gemmaResponse = gemmaAIService.generateResponse(message, user, category, businessContext);
                 
-                if (gemmaResponse != null && !gemmaResponse.trim().isEmpty()) {
+                if (gemmaResponse != null && !gemmaResponse.trim().isEmpty() &&
+                    !gemmaResponse.toLowerCase().contains("unexpected response format") &&
+                    !gemmaResponse.toLowerCase().contains("trouble processing")) {
                     return gemmaResponse;
                 }
                 
-                logger.warn("Gemma AI returned empty response, falling back to rule-based");
+                logger.warn("Gemma AI returned empty or error response, falling back to rule-based");
             } else {
                 logger.info("Gemma AI not available, using rule-based responses");
             }
@@ -715,7 +717,9 @@ public class AIService {
         // DIRECT QUESTION ANSWERING (original logic)
         
         // Store count questions - fallback to business context
-        if (lower.contains("how many store") || lower.contains("number of store") || lower.contains("total store")) {
+        if ((lower.contains("how many") && (lower.contains("store"))) ||
+            (lower.contains("number of") && lower.contains("store")) ||
+            (lower.contains("total") && lower.contains("store"))) {
             if (businessContext.containsKey("total_stores")) {
                 Object stores = businessContext.get("total_stores");
                 return String.format("You have %s stores across all locations.", stores);

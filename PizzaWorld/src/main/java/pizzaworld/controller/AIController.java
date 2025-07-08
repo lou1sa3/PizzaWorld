@@ -86,11 +86,22 @@ public class AIController {
                 user,
                 request.context);
 
-        String answer = aiMsg.getMessage();
-        if (answer == null) answer = "";
+        String answer = aiMsg != null ? aiMsg.getMessage() : "";
 
-        // Stream words every 40 ms for a smooth effect
+        if (answer == null || answer.trim().isEmpty()) {
+            // Nothing to stream – send a single done event to prevent client-side errors
+            return Flux.just(ServerSentEvent.<String>builder()
+                    .event("done").data("[DONE]").build());
+        }
+
+        // Stream whitespace-separated tokens every 40 ms
         String[] tokens = answer.split("\\s+");
+
+        if (tokens.length == 0) {
+            // Safety: should never happen, but guard just in case
+            return Flux.just(ServerSentEvent.<String>builder()
+                    .event("done").data("[DONE]").build());
+        }
 
         return Flux.range(0, tokens.length)
                 .delayElements(Duration.ofMillis(40))
