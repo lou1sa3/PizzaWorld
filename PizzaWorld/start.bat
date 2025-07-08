@@ -12,8 +12,12 @@ set DB_PASSWORD=PizzaWorld.2025
 set JWT_SECRET=supergeheimerSchluessel123456789012345
 set GMAIL_APP_PASSWORD=obcs zapk yyqb wedb
 REM Google AI Configuration for Local Testing
-set GOOGLE_AI_API_KEY=noapikeys
-set GOOGLE_AI_MODEL=gemma-3n-e4b-it
+set GOOGLE_AI_ENABLED=false
+REM keep key but disabling
+
+REM OpenRouter / Gemini Flash Configuration
+set OPENROUTER_API_KEY=private
+set OPENROUTER_MODEL=google/gemini-2.0-flash-exp:free
 
 echo.
 echo    *     *     *     *     *     *     *   

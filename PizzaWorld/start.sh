@@ -13,8 +13,11 @@ export DB_PASSWORD="PizzaWorld.2025"
 export JWT_SECRET="supergeheimerSchluessel123456789012345"
 export GMAIL_APP_PASSWORD="obcs zapk yyqb wedb"
 # Google AI Configuration for Local Testing
-export GOOGLE_AI_API_KEY="noapikeys"
-export GOOGLE_AI_MODEL="gemma-3n-e4b-it"
+export GOOGLE_AI_ENABLED=false
+
+# OpenRouter / Gemini Flash Configuration
+export OPENROUTER_API_KEY="private"
+export OPENROUTER_MODEL="google/gemini-2.0-flash-exp:free"
 
 echo ""
 echo "   *     *     *     *     *     *     *   "

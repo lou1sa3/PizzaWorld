@@ -265,7 +265,7 @@ public class GemmaAIService {
             generationConfig.put("temperature", 0.3); // Reduced for faster, more consistent responses
             generationConfig.put("topK", 20); // Reduced for faster processing
             generationConfig.put("topP", 0.8); // Reduced for faster processing
-            generationConfig.put("maxOutputTokens", 1024); // Increased for longer, more detailed responses (API limit)
+            generationConfig.put("maxOutputTokens", 256); // Increased for longer, more detailed responses (API limit)
             requestBody.put("generationConfig", generationConfig);
             
             String url = GOOGLE_AI_URL + model + ":generateContent?key=" + apiKey;
@@ -279,7 +279,7 @@ public class GemmaAIService {
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(String.class)
-                .timeout(Duration.ofSeconds(60)) // Increased timeout for production
+                .timeout(Duration.ofSeconds(120)) // Increased timeout to 2 minutes
                 .block();
             
             logger.info("Google AI API response received, length: {}", response != null ? response.length() : "null");
