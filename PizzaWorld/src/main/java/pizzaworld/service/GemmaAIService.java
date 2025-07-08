@@ -265,7 +265,7 @@ public class GemmaAIService {
             generationConfig.put("temperature", 0.3); // Reduced for faster, more consistent responses
             generationConfig.put("topK", 20); // Reduced for faster processing
             generationConfig.put("topP", 0.8); // Reduced for faster processing
-            generationConfig.put("maxOutputTokens", 150); // Reduced for faster responses
+            generationConfig.put("maxOutputTokens", 1024); // Increased for longer, more detailed responses (API limit)
             requestBody.put("generationConfig", generationConfig);
             
             String url = GOOGLE_AI_URL + model + ":generateContent?key=" + apiKey;
