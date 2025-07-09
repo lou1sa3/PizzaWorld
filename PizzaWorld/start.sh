@@ -15,10 +15,26 @@ export GMAIL_APP_PASSWORD="obcs zapk yyqb wedb"
 # Google AI Configuration for Local Testing
 export GOOGLE_AI_ENABLED=false
 
-# OpenRouter / DeepSeek R1 Configuration
-export OPENROUTER_API_KEY="a"
-export OPENROUTER_MODEL="openrouter/cypher-alpha:free"
-export OPENROUTER_MAX_TOKENS=1000
+# OpenRouter Multi-Model Configuration
+export OPENROUTER_API_KEY="abc"
+export OPENROUTER_ENABLED=true
+
+# Primary Model
+export OPENROUTER_MODEL_1="openrouter/cypher-alpha:free"
+export OPENROUTER_MAX_TOKENS_1=5000
+
+# Fallback Models
+export OPENROUTER_MODEL_2="google/gemini-2.0-flash-exp:free"
+export OPENROUTER_MAX_TOKENS_2=8000
+
+export OPENROUTER_MODEL_3="deepseek/deepseek-chat-v3-0324:free"
+export OPENROUTER_MAX_TOKENS_3=4000
+
+export OPENROUTER_MODEL_4="qwen/qwq-32b:free"
+export OPENROUTER_MAX_TOKENS_4=6000
+
+export OPENROUTER_MODEL_5="nvidia/llama-3.3-nemotron-super-49b-v1:free"
+export OPENROUTER_MAX_TOKENS_5=4000
 
 echo ""
 echo "   *     *     *     *     *     *     *   "
