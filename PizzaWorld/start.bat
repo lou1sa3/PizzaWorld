@@ -15,9 +15,10 @@ REM Google AI Configuration for Local Testing
 set GOOGLE_AI_ENABLED=false
 REM keep key but disabling
 
-REM OpenRouter / Gemini Flash Configuration
-set OPENROUTER_API_KEY=private
-set OPENROUTER_MODEL=google/gemini-2.0-flash-exp:free
+REM OpenRouter / DeepSeek R1 Configuration
+set OPENROUTER_API_KEY=a
+set OPENROUTER_MODEL=openrouter/cypher-alpha:free
+set OPENROUTER_MAX_TOKENS=5000
 
 echo.
 echo    *     *     *     *     *     *     *   

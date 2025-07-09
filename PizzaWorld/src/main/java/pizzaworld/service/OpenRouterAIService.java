@@ -14,25 +14,28 @@ import java.time.Duration;
 import java.util.*;
 
 @Service
-public class DeepSeekAIService {
+public class OpenRouterAIService {
 
-    private static final Logger logger = LoggerFactory.getLogger(DeepSeekAIService.class);
+    private static final Logger logger = LoggerFactory.getLogger(OpenRouterAIService.class);
 
     private static final String OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
     @Value("${openrouter.api.key:}")
     private String apiKey;
 
-    @Value("${openrouter.model:deepseek/deepseek-r1-0528:free}")
+    @Value("${openrouter.model:openrouter/cypher-alpha:free}")
     private String model;
 
     @Value("${openrouter.enabled:true}")
     private boolean enabled;
 
+    @Value("${openrouter.max.tokens:5000}")
+    private int maxTokens;
+
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
-    public DeepSeekAIService() {
+    public OpenRouterAIService() {
         this.webClient = WebClient.builder()
                 .codecs(cfg -> cfg.defaultCodecs().maxInMemorySize(1024 * 1024))
                 .build();
@@ -47,23 +50,24 @@ public class DeepSeekAIService {
     }
 
     /**
-     * Generate a response using the DeepSeek model via OpenRouter
+     * Generate a response using the configured model (DeepSeek R1) via OpenRouter
      */
     public String generateResponse(String prompt, User user, String category, Map<String, Object> businessContext) {
         if (!isAvailable()) {
-            logger.warn("OpenRouter not configured – skipping DeepSeek call");
+            logger.warn("OpenRouter not configured – skipping OpenRouter call");
             return null;
         }
 
         try {
             Map<String, Object> body = new HashMap<>();
             body.put("model", model);
+            body.put("max_tokens", maxTokens);
 
             List<Map<String, String>> messages = new ArrayList<>();
-            // Simple system message – could be enhanced similar to Gemma prompt
+            // System message for DeepSeek R1 model via OpenRouter
             messages.add(Map.of(
                     "role", "system",
-                    "content", "You are Pizza World business assistant. Answer concisely and helpfully."));
+                    "content", "You are Pizza World business assistant powered by DeepSeek R1. Answer concisely and helpfully with accurate business insights."));
             messages.add(Map.of("role", "user", "content", prompt));
             body.put("messages", messages);
 
