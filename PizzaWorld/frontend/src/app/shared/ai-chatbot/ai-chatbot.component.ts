@@ -1011,20 +1011,20 @@ export class AIChatbotComponent implements OnInit, OnDestroy, AfterViewChecked {
     };
     this.chatHistory = [...this.chatHistory, assistantMsg];
 
-    // Stream tokens with DOM context
-    this.aiService.sendMessageStream(message, domContext).subscribe({
-      next: (token) => {
-        assistantMsg.message += (assistantMsg.message ? ' ' : '') + token;
-      },
-      error: (err) => {
-        assistantMsg.message = '[Error] ' + (err.message || 'stream failed');
-        this.error = err.message || 'Failed to stream response.';
-        this.isLoading = false;
-      },
-      complete: () => {
+    // Send message with DOM context (non-streaming for Render compatibility)
+    this.aiService.sendMessage(message, domContext).subscribe({
+      next: (response) => {
+        assistantMsg.message = response.message;
         // trigger change detection by replacing array
         this.chatHistory = [...this.chatHistory];
         this.isLoading = false;
+      },
+      error: (err) => {
+        assistantMsg.message = '[Error] ' + (err.message || 'request failed');
+        this.error = err.message || 'Failed to get response.';
+        this.isLoading = false;
+        // trigger change detection by replacing array
+        this.chatHistory = [...this.chatHistory];
       }
     });
   }
