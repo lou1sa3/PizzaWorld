@@ -1111,9 +1111,10 @@ export class AIChatbotComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.aiService.getAIStatus().subscribe({
       next: (status) => {
         const statusText = `🔧 AI Status:\n` +
+          `• OpenRouter (DeepSeek R1) Available: ${status.openrouter_available ? 'Yes' : 'No'}\n` +
+          `• Model: ${status.openrouter_config?.model || 'Not configured'}\n` +
+          `• API Key: ${status.openrouter_config?.apiKeyConfigured ? 'Configured' : 'Missing'}\n` +
           `• Google AI Available: ${status.gemma_available ? 'Yes' : 'No'}\n` +
-          `• Model: ${status.gemma_config?.model || 'Not configured'}\n` +
-          `• API Key: ${status.gemma_config?.apiKeyConfigured ? 'Configured' : 'Missing'}\n` +
           `• Fallback Enabled: ${status.fallback_enabled ? 'Yes' : 'No'}`;
 
         const statusMessage: ChatMessage = {

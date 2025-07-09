@@ -35,7 +35,7 @@ public class AIService {
     private GemmaAIService gemmaAIService;
     
     @Autowired
-    private DeepSeekAIService deepSeekAIService;
+    private OpenRouterAIService openRouterAIService;
     
     @Autowired
     private StaticDocRetriever docRetriever;
@@ -116,17 +116,12 @@ public class AIService {
             // Generate AI response with Gemma AI integration
             String aiResponse = generateAIResponseWithGemma(finalPrompt, user, category);
 
-            // ─── Number-consistency guard-rail ───
+            // ─── Business context for fallback use ───
             Map<String, Object> businessContext = gatherBusinessContext(user, category); // cached
             
             // Add DOM context to business context for fallback use
             if (domContext != null && !domContext.trim().isEmpty()) {
                 businessContext.put("dom_context", domContext);
-            }
-            
-            if (!isNumberConsistent(aiResponse, businessContext)) {
-                logger.warn("AI response failed numeric consistency check – falling back to rule-based response");
-                aiResponse = generateRuleBasedResponse(message, user, category, businessContext);
             }
             
             // Create AI response message
@@ -161,14 +156,14 @@ public class AIService {
             // Gather business context for the AI
             Map<String, Object> businessContext = gatherBusinessContext(user, category);
             
-            // Try DeepSeek via OpenRouter first if configured
-            if (deepSeekAIService != null && deepSeekAIService.isAvailable()) {
-                logger.info("Using DeepSeek (OpenRouter) for response generation");
-                String deepResponse = deepSeekAIService.generateResponse(message, user, category, businessContext);
-                if (deepResponse != null && !deepResponse.trim().isEmpty()) {
-                    return deepResponse;
+            // Try OpenRouter (DeepSeek R1) first if configured
+            if (openRouterAIService != null && openRouterAIService.isAvailable()) {
+                logger.info("Using OpenRouter (DeepSeek R1) for response generation");
+                String openRouterResponse = openRouterAIService.generateResponse(message, user, category, businessContext);
+                if (openRouterResponse != null && !openRouterResponse.trim().isEmpty()) {
+                    return openRouterResponse;
                 }
-                logger.warn("DeepSeek returned empty response, falling back to Gemma/Rule-based");
+                logger.warn("OpenRouter returned empty response, falling back to Gemma/Rule-based");
             }
             
             // Proceed with Gemma if available
@@ -1607,9 +1602,9 @@ public class AIService {
     public Map<String, Object> getAIStatus() {
         Map<String, Object> status = new HashMap<>();
         status.put("gemma_available", gemmaAIService.isAvailable());
-        status.put("deepseek_available", deepSeekAIService.isAvailable());
+        status.put("openrouter_available", openRouterAIService.isAvailable());
         status.put("gemma_config", gemmaAIService.getConfigInfo());
-        status.put("deepseek_config", deepSeekAIService.getConfigInfo());
+        status.put("openrouter_config", openRouterAIService.getConfigInfo());
         status.put("fallback_enabled", true);
         return status;
     }
@@ -1960,76 +1955,7 @@ public class AIService {
         return response;
     }
 
-    /**
-     * Check that every monetary value and large number mentioned in reply
-     * exists in the businessContext with proper validation.
-     */
-    private boolean isNumberConsistent(String reply, Map<String, Object> ctx) {
-        if (reply == null || reply.isBlank()) return true;
 
-        // Extract all valid numbers from context with semantic meaning
-        Set<String> validNumbers = extractValidNumbers(ctx);
-        
-        // Find all numbers in the reply
-        Pattern numberPattern = Pattern.compile("(\\$[0-9,]+(?:\\.[0-9]{2})?|[0-9]{1,3}(?:,[0-9]{3})+(?:\\.[0-9]{2})?)");
-        Matcher matcher = numberPattern.matcher(reply);
-        
-        while (matcher.find()) {
-            String foundNumber = matcher.group();
-            String normalizedNumber = normalizeNumber(foundNumber);
-            
-            // Check if this number exists in our valid set
-            if (!validNumbers.contains(normalizedNumber)) {
-                logger.warn("AI response contains unvalidated number: {} (normalized: {})", foundNumber, normalizedNumber);
-                return false;
-            }
-        }
-        
-        return true;
-    }
-    
-    /**
-     * Extract all valid numbers from business context with proper normalization
-     */
-    private Set<String> extractValidNumbers(Map<String, Object> ctx) {
-        Set<String> validNumbers = new HashSet<>();
-        
-        for (Map.Entry<String, Object> entry : ctx.entrySet()) {
-            String key = entry.getKey();
-            Object value = entry.getValue();
-            
-            if (value == null) continue;
-            
-            // Skip raw data collections to avoid false positives
-            if (key.endsWith("_raw")) continue;
-            
-            String valueStr = value.toString();
-            
-            // Extract numbers from formatted strings
-            Pattern numberPattern = Pattern.compile("(\\$[0-9,]+(?:\\.[0-9]{2})?|[0-9]{1,3}(?:,[0-9]{3})+(?:\\.[0-9]{2})?)");
-            Matcher matcher = numberPattern.matcher(valueStr);
-            
-            while (matcher.find()) {
-                String number = matcher.group();
-                String normalized = normalizeNumber(number);
-                validNumbers.add(normalized);
-                
-                // Also add common variations (with/without decimals)
-                if (normalized.endsWith(".00")) {
-                    validNumbers.add(normalized.substring(0, normalized.length() - 3));
-                }
-            }
-        }
-        
-        return validNumbers;
-    }
-    
-    /**
-     * Normalize a number string for consistent comparison
-     */
-    private String normalizeNumber(String number) {
-        return number.replace("$", "").replace(",", "");
-    }
     
     /**
      * Safely extract a numeric value from a map with fallback field names
