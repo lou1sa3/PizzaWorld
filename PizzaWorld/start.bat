@@ -15,10 +15,26 @@ REM Google AI Configuration for Local Testing
 set GOOGLE_AI_ENABLED=false
 REM keep key but disabling
 
-REM OpenRouter / DeepSeek R1 Configuration
+REM OpenRouter Multi-Model Configuration
 set OPENROUTER_API_KEY=a
-set OPENROUTER_MODEL=openrouter/cypher-alpha:free
-set OPENROUTER_MAX_TOKENS=5000
+set OPENROUTER_ENABLED=true
+
+REM Primary Model
+set OPENROUTER_MODEL_1=openrouter/cypher-alpha:free
+set OPENROUTER_MAX_TOKENS_1=5000
+
+REM Fallback Models
+set OPENROUTER_MODEL_2=google/gemini-2.0-flash-exp:free
+set OPENROUTER_MAX_TOKENS_2=8000
+
+set OPENROUTER_MODEL_3=deepseek/deepseek-chat-v3-0324:free
+set OPENROUTER_MAX_TOKENS_3=4000
+
+set OPENROUTER_MODEL_4=qwen/qwq-32b:free
+set OPENROUTER_MAX_TOKENS_4=6000
+
+set OPENROUTER_MODEL_5=nvidia/llama-3.3-nemotron-super-49b-v1:free
+set OPENROUTER_MAX_TOKENS_5=4000
 
 echo.
 echo    *     *     *     *     *     *     *   
