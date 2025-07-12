@@ -1,9 +1,9 @@
 # PizzaWorld Dashboard
 
-### Official Homepage: https://www.pizzaworldplus.tech/
-### Access to Dashboard: https://dashboard.pizzaworldplus.tech/ (available via homepage or direct access)
+### Official Homepage: https://www.pizzaworldplus.tech/ (online)
+### Access to Dashboard: https://dashboard.pizzaworldplus.tech/ (available via homepage or direct access/currently offline)
 ### GitHub Repository: https://github.com/luigids03/PizzaWorld
-### Documentation: https://www.pizzaworldplus.tech/documentation/ (available via homepage or direct access)
+### Documentation: https://www.pizzaworldplus.tech/documentation/ (available via homepage or direct access/online)
 
 ---
 
